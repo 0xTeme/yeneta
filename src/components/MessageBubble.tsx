@@ -10,8 +10,12 @@ import QuizCard from "./QuizCard";
 import { FileText, Image as ImageIcon, Copy, Check, Edit2, Download, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
+interface ExtendedMessage extends Message {
+  isStreaming?: boolean;
+}
+
 interface Props {
-  message: Message;
+  message: ExtendedMessage;
   language: Language;
   onEdit?: (id: string, newText: string) => void;
   onRetry?: (id: string) => void;
@@ -25,10 +29,10 @@ const CodeBlock = ({ match, codeString, children, className, ...props }: any) =>
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <div className="relative bg-[#1e1e2e] rounded-lg my-4 overflow-hidden">
+    <div className="relative bg-[#1e1e2e] rounded-lg my-4 overflow-hidden shadow-lg">
       <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d3b] text-xs text-gray-300">
         <span>{match[1]}</span>
-        <button onClick={handleCopy} className="hover:text-white flex items-center gap-1">
+        <button onClick={handleCopy} className="hover:text-white flex items-center gap-1 transition-colors">
           {copied ? <><Check size={14} className="text-green-500"/> Copied</> : <><Copy size={14}/> Copy</>}
         </button>
       </div>
@@ -95,6 +99,7 @@ export default function MessageBubble({ message, language, onEdit, onRetry }: Pr
           isUser ? "bg-[#1a7a4c] text-white rounded-br-none" : "bg-white border border-gray-100 text-[#1a1a2e] rounded-bl-none"
         } ${message.isStreaming ? "animate-pulse" : ""}`}
       >
+        {/* FILE NAME HEADER */}
         {message.fileName && (
           <div className={`flex items-center gap-2 mb-2 pb-2 text-sm border-b ${isUser ? "border-green-600/50" : "border-gray-200"}`}>
             {message.type === "image" ? <ImageIcon size={16} /> : <FileText size={16} />}
@@ -102,6 +107,7 @@ export default function MessageBubble({ message, language, onEdit, onRetry }: Pr
           </div>
         )}
 
+        {/* MESSAGE CONTENT OR EDIT MODE */}
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <textarea
@@ -116,7 +122,7 @@ export default function MessageBubble({ message, language, onEdit, onRetry }: Pr
             </div>
           </div>
         ) : (
-          <div className={`prose prose-sm max-w-none ${isUser ? "prose-invert" : ""}`}>
+          <div className={`markdown-body ${isUser ? "prose-invert" : ""}`}>
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
@@ -136,8 +142,10 @@ export default function MessageBubble({ message, language, onEdit, onRetry }: Pr
           </div>
         )}
 
+        {/* INLINE ACTION BAR */}
         <div className={`flex items-center gap-4 mt-3 pt-2 ${isUser ? "justify-end border-t border-white/20 text-white/80" : "justify-start border-t border-gray-100 text-gray-500"} opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity`}>
           
+          {/* USER ACTIONS */}
           {isUser && !isEditing && (
             <>
               <button onClick={() => setIsEditing(true)} className="hover:text-white flex items-center gap-1 text-[11px] font-medium" title="Edit Message"><Edit2 size={14}/> Edit</button>
@@ -147,15 +155,19 @@ export default function MessageBubble({ message, language, onEdit, onRetry }: Pr
             </>
           )}
           
+          {/* AI ASSISTANT ACTIONS */}
           {!isUser && !message.isStreaming && (
             <>
               <SpeakButton text={message.content} language={language} />
+              
               <button onClick={handleCopyText} className="hover:text-[#1a7a4c] flex items-center gap-1 text-[11px] font-medium transition-colors">
                 {copiedText ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} {copiedText ? "Copied" : "Copy"}
               </button>
+              
               <button onClick={handleDownloadPDF} className="hover:text-[#1a7a4c] flex items-center gap-1 text-[11px] font-medium transition-colors">
                 <Download size={14}/> PDF
               </button>
+              
               {onRetry && (
                 <button onClick={() => onRetry(message.id)} className="hover:text-[#1a7a4c] flex items-center gap-1 text-[11px] font-medium transition-colors">
                   <RefreshCw size={14}/> Retry

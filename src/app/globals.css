@@ -39,3 +39,113 @@ body {
 }
 .typing-dot:nth-child(1) { animation-delay: -0.32s; }
 .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+/* =========================================
+   RICH MARKDOWN STYLING (Grok/ChatGPT style)
+   ========================================= */
+.markdown-body {
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.markdown-body h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-dark);
+}
+
+.markdown-body h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-body p {
+  margin-bottom: 1rem;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-body li > p {
+  margin-bottom: 0;
+}
+
+.markdown-body strong {
+  font-weight: 700;
+  color: var(--color-dark);
+}
+
+/* User bubble overrides to keep white text visible */
+.prose-invert.markdown-body h1,
+.prose-invert.markdown-body h2,
+.prose-invert.markdown-body h3,
+.prose-invert.markdown-body strong {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--color-secondary);
+  background-color: rgba(240, 165, 0, 0.1);
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #475569;
+}
+
+.prose-invert.markdown-body blockquote {
+  color: #e2e8f0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+}
+
+.markdown-body th, .markdown-body td {
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-body th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.prose-invert.markdown-body th, 
+.prose-invert.markdown-body td {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.prose-invert.markdown-body th {
+  background-color: rgba(0, 0, 0, 0.2);
+}
