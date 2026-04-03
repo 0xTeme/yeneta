@@ -8,7 +8,7 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import SpeakButton from "./SpeakButton";
 import QuizCard from "./QuizCard";
-import { FileText, Image as ImageIcon, Copy, Check, RefreshCw, Edit2 } from "lucide-react";
+import { FileText, Image as ImageIcon, Copy, Check, RefreshCw, Edit2, Download } from "lucide-react";
 
 interface ExtendedMessage extends Message {
   isStreaming?: boolean;
@@ -61,6 +61,31 @@ export default function MessageBubble({ message, language, onRetry, onEdit }: Pr
       onEdit(message.id, editText.trim());
     }
     setIsEditing(false);
+  };
+
+  const handleDownloadPDF = () => {
+    const printWindow = window.open('', '', 'height=800,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Yeneta AI Response</title>');
+      printWindow.document.write('<style>body{font-family:sans-serif;padding:40px;line-height:1.6;color:#1a1a2e;} pre{background:#f1f5f9;padding:15px;border-radius:8px;} code{background:#f1f5f9;padding:2px 4px;border-radius:4px;font-family:monospace;}</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write('<h2 style="color:#1a7a4c;">የኔታ (Yeneta) Response</h2><hr/>');
+      
+      const htmlContent = message.content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+        .replace(/\n/g, '<br>');
+        
+      printWindow.document.write(htmlContent);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
   };
 
   if (message.type === "quiz") {
@@ -123,6 +148,9 @@ export default function MessageBubble({ message, language, onRetry, onEdit }: Pr
           )}
           {!isUser && !message.isStreaming && (
             <>
+              <button onClick={handleDownloadPDF} className="p-1.5 text-gray-400 hover:text-[#1a7a4c] bg-white rounded-full shadow border border-gray-100" title="Download as PDF">
+                <Download size={14} />
+              </button>
               <button onClick={handleCopyText} className="p-1.5 text-gray-400 hover:text-[#1a7a4c] bg-white rounded-full shadow border border-gray-100" title="Copy Message">
                 {copiedText ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
               </button>
