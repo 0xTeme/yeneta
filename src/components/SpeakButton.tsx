@@ -1,23 +1,32 @@
 "use client";
 
-import { Volume2 } from "lucide-react";
-import { speakText } from "@/lib/speech";
+import { useState } from "react";
+import { Volume2, Square } from "lucide-react";
+import { speakText, stopSpeaking } from "@/lib/speech";
 import { Language } from "@/types";
 
-interface Props {
-  text: string;
-  language: Language;
-}
+export default function SpeakButton({ text, language }: { text: string; language: Language }) {
+  const [isPlaying, setIsPlaying] = useState(false);
 
-export default function SpeakButton({ text, language }: Props) {
+  const handleToggle = async () => {
+    if (isPlaying) {
+      stopSpeaking();
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+      await speakText(text, language, "female"); // defaults to female voice
+      setIsPlaying(false); // Resets when audio finishes naturally
+    }
+  };
+
   return (
     <button
-      onClick={() => speakText(text, language)}
-      className="p-1.5 text-gray-400 hover:text-[#1a7a4c] transition-colors rounded-full hover:bg-gray-100"
-      title="Listen"
-      aria-label="Speak text"
+      onClick={handleToggle}
+      className={`p-1.5 transition-colors rounded-full shadow ${
+        isPlaying ? "text-red-500 bg-red-50 border border-red-100" : "text-gray-400 hover:text-[#1a7a4c] bg-white border border-gray-100"
+      }`}
     >
-      <Volume2 size={18} />
+      {isPlaying ? <Square size={14} fill="currentColor" /> : <Volume2 size={14} />}
     </button>
   );
 }
