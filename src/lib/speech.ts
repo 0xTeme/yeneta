@@ -16,46 +16,43 @@ interface SpeechRecognition extends EventTarget {
   stop: () => void;
 }
 
-export const speakText = (
+export const speakText = async (
   text: string,
-  language: "amharic" | "english"
-): void => {
-  if (typeof window === "undefined") return;
-  if (!("speechSynthesis" in window)) return;
+  language: "amharic" | "english",
+  gender: "male" | "female" = "female"
+): Promise<HTMLAudioElement | null> => {
+  if (typeof window === "undefined") return null;
 
-  window.speechSynthesis.cancel();
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, language, gender }),
+    });
 
-  const speak = () => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    const langCode = language === "amharic" ? "am-ET" : "en-US";
-    utterance.lang = langCode;
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
+    if (!res.ok) throw new Error("TTS request failed");
 
-    // Try to find a matching voice
-    const voices = window.speechSynthesis.getVoices();
-    const match = voices.find((v) => v.lang.startsWith(language === "amharic" ? "am" : "en"));
-    if (match) {
-      utterance.voice = match;
-    }
+    const audioBlob = await res.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
 
-    window.speechSynthesis.speak(utterance);
-  };
-
-  // Voices might not be loaded yet
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    speak();
-  } else {
-    window.speechSynthesis.onvoiceschanged = () => {
-      speak();
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
     };
+
+    await audio.play();
+    return audio;
+  } catch (error) {
+    console.error("TTS error:", error);
+    return null;
   }
 };
 
 export const stopSpeaking = (): void => {
-  if (typeof window === "undefined") return;
-  window.speechSynthesis.cancel();
+  document.querySelectorAll("audio").forEach((audio) => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
 };
 
 export const startListening = (
@@ -65,16 +62,16 @@ export const startListening = (
 ): (() => void) | null => {
   if (typeof window === "undefined") return null;
 
-  const SpeechRecognition =
+  const SpeechRecognitionAPI =
     (window as unknown as Record<string, unknown>).SpeechRecognition ||
     (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
+  if (!SpeechRecognitionAPI) {
     onError("Speech recognition not supported in this browser");
     return null;
   }
 
-  const recognition = new (SpeechRecognition as new () => SpeechRecognition)();
+  const recognition = new (SpeechRecognitionAPI as new () => SpeechRecognition)();
   recognition.lang = language === "amharic" ? "am-ET" : "en-US";
   recognition.continuous = false;
   recognition.interimResults = false;
