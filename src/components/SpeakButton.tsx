@@ -14,8 +14,11 @@ export default function SpeakButton({ text, language }: { text: string; language
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
-      await speakText(text, language, "female"); // defaults to female voice
-      setIsPlaying(false); // Resets when audio finishes naturally
+      try {
+        await speakText(text, language, "female");
+      } finally {
+        setIsPlaying(false);
+      }
     }
   };
 
