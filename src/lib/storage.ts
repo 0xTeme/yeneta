@@ -62,3 +62,14 @@ export const createNewSession = (language: Language): ChatSession => {
     updatedAt: Date.now(),
   };
 };
+
+export const moveSessionToFolder = (id: string, folderName: string): void => {
+  if (typeof window === "undefined") return;
+  const sessions = getAllSessions();
+  const index = sessions.findIndex((s) => s.id === id);
+  
+  if (index >= 0) {
+    sessions[index].folder = folderName.trim() === "" ? undefined : folderName.trim();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+  }
+};
