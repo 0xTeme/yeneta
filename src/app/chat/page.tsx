@@ -64,10 +64,11 @@ export default function ChatPage() {
       saveSession({
         id: currentSessionId,
         messages,
-        language: existingSession?.language || language,
+        language,
         createdAt: existingSession?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        title: existingSession?.title || "New Chat"
+        title: existingSession?.title || "New Chat",
+        folder: existingSession?.folder
       });
       setSessionsList(getAllSessions());
     }
