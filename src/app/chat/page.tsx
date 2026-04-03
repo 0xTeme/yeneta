@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import ChatWindow from "@/components/ChatWindow";
 import ChatInput from "@/components/ChatInput";
 import Sidebar from "@/components/Sidebar";
-import { Message, Language, DocumentAction, ApiResponse, ChatSession } from "@/types";
+import { Message, Language, DocumentAction, ApiResponse } from "@/types";
 import { Loader2 } from "lucide-react";
 import { getAllSessions, getSession, saveSession, createNewSession, deleteSession } from "@/lib/storage";
 
@@ -21,14 +21,34 @@ export default function ChatPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Layout & Settings States
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default open on desktop
+  const [userGender, setUserGender] = useState<"male"|"female"|null>(null);
+  const [showGenderModal, setShowGenderModal] = useState(false);
+
+  // Session States
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [sessionsList, setSessionsList] = useState<any[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Auth Protection
   useEffect(() => { if (status === "unauthenticated") router.push("/"); }, [status, router]);
 
+  // Load Gender preference
+  useEffect(() => {
+    const savedGender = localStorage.getItem("yeneta_gender") as "male"|"female"|null;
+    if (savedGender) setUserGender(savedGender);
+    else setShowGenderModal(true);
+  }, []);
+
+  const saveGender = (g: "male" | "female") => {
+    localStorage.setItem("yeneta_gender", g);
+    setUserGender(g);
+    setShowGenderModal(false);
+  };
+
+  // Load Chat Sessions
   useEffect(() => {
     if (status === "authenticated") {
       const all = getAllSessions();
@@ -41,21 +61,21 @@ export default function ChatPage() {
   useEffect(() => {
     if (currentSessionId && messages.length > 0) {
       const existingSession = getSession(currentSessionId);
-      const session: ChatSession = {
+      saveSession({
         id: currentSessionId,
-        title: existingSession?.title || "New Chat",
         messages,
         language,
         createdAt: existingSession?.createdAt || Date.now(),
         updatedAt: Date.now(),
-      };
-      saveSession(session);
+        title: existingSession?.title || "New Chat"
+      });
       setSessionsList(getAllSessions());
     }
   }, [messages, currentSessionId, language]);
 
   if (status === "loading" || status === "unauthenticated") return null;
 
+  // Session Handlers
   const handleNewSession = () => {
     const newSession = createNewSession(language);
     setCurrentSessionId(newSession.id);
@@ -68,7 +88,6 @@ export default function ChatPage() {
     if (session) {
       setCurrentSessionId(id);
       setMessages(session.messages);
-      setLanguage(session.language || "amharic");
     }
   };
 
@@ -100,16 +119,14 @@ export default function ChatPage() {
   const handleSendMessage = async (text: string, stagedFile?: File, customHistory?: Message[]) => {
     const historyToUse = customHistory || messages;
     
-    // If user sent a staged file from the quick-attach input, route it to document handler
     if (stagedFile) {
-      await handleProcessDocument(stagedFile, "explain"); // defaults to explain action
+      await handleProcessDocument(stagedFile, "explain");
       return;
     }
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, timestamp: Date.now(), type: "text" };
     const assistantId = (Date.now() + 1).toString();
     
-    // Insert empty streaming assistant message
     setMessages([...historyToUse, userMsg, { id: assistantId, role: "assistant", content: "", timestamp: Date.now(), type: "text", isStreaming: true } as any]);
     setIsTyping(true);
 
@@ -119,11 +136,11 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, language, history: historyToUse }),
+        body: JSON.stringify({ message: text, language, history: historyToUse, userGender }), // Sent user gender to API
         signal: abortControllerRef.current.signal
       });
 
-      if (!res.body) throw new Error("No stream body returned from API");
+      if (!res.body) throw new Error("No stream body returned");
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -136,10 +153,7 @@ export default function ChatPage() {
         const chunkValue = decoder.decode(value);
         fullText += chunkValue;
 
-        // Update the streaming message in real-time
-        setMessages((prev) => 
-          prev.map(m => m.id === assistantId ? { ...m, content: fullText } : m)
-        );
+        setMessages((prev) => prev.map(m => m.id === assistantId ? { ...m, content: fullText } : m));
       }
     } catch (error: any) {
       if (error.name !== "AbortError") {
@@ -171,6 +185,7 @@ export default function ChatPage() {
       formData.append(isImage ? "image" : "document", file);
       formData.append("language", language);
       if (!isImage) formData.append("action", action);
+      formData.append("userGender", userGender || "female"); // Included in docs upload too
 
       const res = await fetch(endpoint, { method: "POST", body: formData });
       const data: ApiResponse = await res.json();
@@ -190,21 +205,49 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <Sidebar 
-        sessions={sessionsList} currentSessionId={currentSessionId}
-        onSelect={handleLoadSession} onNew={handleNewSession} onDelete={handleDeleteSession}
-        language={language} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen}
-      />
-      <div className="flex-1 flex flex-col w-full h-full relative">
-        <div className="md:block pl-12 md:pl-0">
-          <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(true)} />
+    <div className="flex h-screen overflow-hidden bg-white relative font-noto">
+      
+      {/* Gender Modal */}
+      {showGenderModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl text-center animate-in fade-in zoom-in">
+            <div className="w-16 h-16 bg-green-100 text-[#1a7a4c] flex items-center justify-center rounded-full mx-auto mb-4 text-3xl">🎓</div>
+            <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">Welcome to Yeneta <br/><span className="text-[#1a7a4c]">እንኳን በደህና መጡ</span></h2>
+            <p className="text-gray-500 mb-6 text-sm">To provide personalized Amharic responses, please select your gender. <br/>ትክክለኛ የአማርኛ ምላሽ ለመስጠት፣ እባክዎ ጾታዎን ይምረጡ።</p>
+            <div className="flex gap-4 justify-center">
+              <button onClick={() => saveGender("male")} className="px-6 py-3 border-2 border-gray-200 rounded-xl hover:border-[#1a7a4c] hover:bg-green-50 font-bold text-[#1a1a2e] transition-all">Male / ወንድ</button>
+              <button onClick={() => saveGender("female")} className="px-6 py-3 border-2 border-gray-200 rounded-xl hover:border-[#1a7a4c] hover:bg-green-50 font-bold text-[#1a1a2e] transition-all">Female / ሴት</button>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Sidebar - Desktop & Mobile */}
+      <div className={`${isSidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full"} transition-all duration-300 ease-in-out shrink-0 bg-[#1a1a2e] absolute md:relative z-40 h-full`}>
+        <div className="w-64 h-full">
+          <Sidebar 
+            sessions={sessionsList} currentSessionId={currentSessionId}
+            onSelect={handleLoadSession} onNew={handleNewSession} onDelete={handleDeleteSession}
+            language={language} isOpen={true} setIsOpen={setIsSidebarOpen} 
+          />
+        </div>
+      </div>
+      
+      {/* Mobile overlay */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        <Navbar 
+          language={language} 
+          setLanguage={setLanguage} 
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+        />
         <ChatWindow
           messages={messages} language={language} isTyping={isTyping && !messages.some(m => (m as any).isStreaming)}
           showUpload={showUpload} setShowUpload={setShowUpload}
           onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
-          onRetry={(id) => { /* Retry logic uses edit logic under hood now */ handleEditMessage(id, messages[messages.findIndex(m=>m.id===id)-1]?.content || "") }}
+          onRetry={(id) => handleEditMessage(id, messages[messages.findIndex(m=>m.id===id)-1]?.content || "")}
           onEditMessage={handleEditMessage}
         />
         <ChatInput
