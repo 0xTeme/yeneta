@@ -5,13 +5,13 @@ import { ChatRequest } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, language, history }: ChatRequest = await req.json();
+    const { message, language, history, userGender }: ChatRequest = await req.json();
 
     if (!message || !message.trim()) {
       return new Response(JSON.stringify({ error: "Message required" }), { status: 400 });
     }
 
-    const systemPrompt = getSystemPrompt(language || "english");
+    const systemPrompt = getSystemPrompt(language || "english", userGender);
 
     const chatHistory = (history || []).map((msg) => ({
       role: msg.role === "user" ? "user" as const : "model" as const,
