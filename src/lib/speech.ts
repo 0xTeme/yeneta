@@ -1,4 +1,5 @@
 let currentAudio: HTMLAudioElement | null = null;
+let ttsAbortController: AbortController | null = null;
 
 interface SpeechRecognitionEvent extends Event {
   results: { [index: number]: { [index: number]: { transcript: string } } };
@@ -11,11 +12,16 @@ export const speakText = async (
 ): Promise<void> => {
   if (typeof window === "undefined") return;
 
+  stopSpeaking();
+  
+  ttsAbortController = new AbortController();
+
   try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, language, gender }),
+      signal: ttsAbortController.signal,
     });
 
     if (!res.ok) throw new Error("TTS failed");
@@ -24,11 +30,6 @@ export const speakText = async (
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
 
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    }
-    
     currentAudio = audio;
 
     audio.onended = () => {
@@ -37,12 +38,20 @@ export const speakText = async (
     };
 
     await audio.play();
-  } catch (error) {
-    console.error("TTS error:", error);
+  } catch (error: any) {
+    if (error.name === "AbortError") {
+      console.log("TTS request aborted safely.");
+    } else {
+      console.error("TTS error:", error);
+    }
   }
 };
 
 export const stopSpeaking = (): void => {
+  if (ttsAbortController) {
+    ttsAbortController.abort();
+    ttsAbortController = null;
+  }
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
