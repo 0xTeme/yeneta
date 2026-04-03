@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { model } from "@/lib/gemini";
 import { getSystemPrompt } from "@/lib/prompts";
 import { ChatRequest } from "@/types";
@@ -8,10 +8,7 @@ export async function POST(req: NextRequest) {
     const { message, language, history }: ChatRequest = await req.json();
 
     if (!message || !message.trim()) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Message required" }), { status: 400 });
     }
 
     const systemPrompt = getSystemPrompt(language || "english");
@@ -21,24 +18,32 @@ export async function POST(req: NextRequest) {
       parts: [{ text: msg.content }],
     }));
 
-    const chat = model.startChat({
-      history: chatHistory,
+    const chat = model.startChat({ history: chatHistory });
+
+    const result = await chat.sendMessageStream(`${systemPrompt}\n\nStudent: ${message}`);
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            controller.enqueue(new TextEncoder().encode(chunkText));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
     });
 
-    const result = await chat.sendMessage(
-      `${systemPrompt}\n\nStudent: ${message}`
-    );
-
-    const reply = result.response.text();
-
-    return NextResponse.json({ reply });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Something went wrong";
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Something went wrong" }), { status: 500 });
   }
 }
