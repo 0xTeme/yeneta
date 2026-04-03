@@ -21,7 +21,7 @@ export default function QuizCard({ quiz, language }: Props) {
   const handleSelect = (option: string) => {
     if (selectedOption) return;
     setSelectedOption(option);
-    if (option === question.correct) {
+    if (option.startsWith(question.correct + ")")) {
       setScore((s) => s + 1);
     }
   };
@@ -62,7 +62,7 @@ export default function QuizCard({ quiz, language }: Props) {
       <div className="flex flex-col gap-2 mb-4">
         {question.options.map((option, idx) => {
           const isSelected = selectedOption === option;
-          const isCorrect = option === question.correct;
+          const isCorrect = option.startsWith(question.correct + ")");
           const showColors = selectedOption !== null;
 
           let btnClass = "border-gray-200 hover:border-[#1a7a4c] bg-white";
