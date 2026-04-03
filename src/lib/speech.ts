@@ -14,22 +14,25 @@ export const speakText = async (
 
   stopSpeaking();
   
-  ttsAbortController = new AbortController();
+  const abortCtrl = new AbortController();
+  ttsAbortController = abortCtrl;
 
   try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, language, gender }),
-      signal: ttsAbortController.signal,
+      signal: abortCtrl.signal,
     });
 
     if (!res.ok) throw new Error("TTS failed");
 
     const audioBlob = await res.blob();
+    
+    if (abortCtrl.signal.aborted) return;
+
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
-
     currentAudio = audio;
 
     audio.onended = () => {
@@ -37,13 +40,11 @@ export const speakText = async (
       if (currentAudio === audio) currentAudio = null;
     };
 
+    if (abortCtrl.signal.aborted) return;
     await audio.play();
+
   } catch (error: any) {
-    if (error.name === "AbortError") {
-      console.log("TTS request aborted safely.");
-    } else {
-      console.error("TTS error:", error);
-    }
+    if (error.name !== "AbortError") console.error("TTS error:", error);
   }
 };
 
