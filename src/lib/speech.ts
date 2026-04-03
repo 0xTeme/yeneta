@@ -1,7 +1,3 @@
-"use client";
-
-import { Language } from "@/types";
-
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
 }
@@ -12,51 +8,56 @@ interface SpeechRecognitionErrorEvent extends Event {
 
 interface SpeechRecognition extends EventTarget {
   lang: string;
+  continuous: boolean;
   interimResults: boolean;
-  maxAlternatives: number;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   start: () => void;
   stop: () => void;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-export const speakText = (text: string, language: Language) => {
-  if (!("speechSynthesis" in window)) {
-    console.error("SpeechSynthesis API not supported");
-    return;
-  }
+export const speakText = (
+  text: string,
+  language: "amharic" | "english"
+): void => {
+  if (typeof window === "undefined") return;
+  if (!("speechSynthesis" in window)) return;
 
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = language === "amharic" ? "am-ET" : "en-US";
-  
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+
   window.speechSynthesis.speak(utterance);
 };
 
+export const stopSpeaking = (): void => {
+  if (typeof window === "undefined") return;
+  window.speechSynthesis.cancel();
+};
+
 export const startListening = (
-  language: Language,
+  language: "amharic" | "english",
   onResult: (text: string) => void,
-  onError: (err: string) => void
-): SpeechRecognition | null => {
-  const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-  
-  if (!SpeechRecognitionClass) {
-    onError("Speech Recognition API is not supported in your browser.");
+  onError: (error: string) => void
+): (() => void) | null => {
+  if (typeof window === "undefined") return null;
+
+  const SpeechRecognition =
+    (window as unknown as Record<string, unknown>).SpeechRecognition ||
+    (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    onError("Speech recognition not supported in this browser");
     return null;
   }
 
-  const recognition = new SpeechRecognitionClass();
+  const recognition = new (SpeechRecognition as new () => SpeechRecognition)();
   recognition.lang = language === "amharic" ? "am-ET" : "en-US";
+  recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
 
   recognition.onresult = (event: SpeechRecognitionEvent) => {
     const transcript = event.results[0][0].transcript;
@@ -68,5 +69,8 @@ export const startListening = (
   };
 
   recognition.start();
-  return recognition;
+
+  return () => {
+    recognition.stop();
+  };
 };
