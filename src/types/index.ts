@@ -49,3 +49,14 @@ export interface ApiResponse {
   quiz?: Quiz;
   error?: string;
 }
+
+export type VoiceGender = "male" | "female";
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  language: Language;
+  createdAt: number;
+  updatedAt: number;
+}
