@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -8,8 +8,7 @@ import ChatWindow from "@/components/ChatWindow";
 import ChatInput from "@/components/ChatInput";
 import Sidebar from "@/components/Sidebar";
 import { Message, Language, DocumentAction, ApiResponse, ChatSession } from "@/types";
-import { Loader2, Menu } from "lucide-react";
-
+import { Loader2 } from "lucide-react";
 import { getAllSessions, getSession, saveSession, createNewSession, deleteSession } from "@/lib/storage";
 
 export default function ChatPage() {
@@ -24,32 +23,30 @@ export default function ChatPage() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
-  const [sessionsList, setSessionsList] = useState<ChatSession[]>([]);
+  const [sessionsList, setSessionsList] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (status === "unauthenticated") router.push("/");
-  }, [status, router]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => { if (status === "unauthenticated") router.push("/"); }, [status, router]);
 
   useEffect(() => {
     if (status === "authenticated") {
       const all = getAllSessions();
       setSessionsList(all);
-      if (all.length > 0) {
-        handleLoadSession(all[0].id);
-      } else {
-        handleNewSession();
-      }
+      if (all.length > 0) handleLoadSession(all[0].id);
+      else handleNewSession();
     }
   }, [status]);
 
   useEffect(() => {
     if (currentSessionId && messages.length > 0) {
+      const existingSession = getSession(currentSessionId);
       const session: ChatSession = {
         id: currentSessionId,
-        title: sessionsList.find(s => s.id === currentSessionId)?.title || "New Chat",
+        title: existingSession?.title || "New Chat",
         messages,
         language,
-        createdAt: Date.now(),
+        createdAt: existingSession?.createdAt || Date.now(),
         updatedAt: Date.now(),
       };
       saveSession(session);
@@ -57,16 +54,7 @@ export default function ChatPage() {
     }
   }, [messages, currentSessionId, language]);
 
-  if (status === "loading") {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 text-[#1a7a4c]">
-        <Loader2 size={40} className="animate-spin mb-4" />
-        <p className="font-bold animate-pulse">Loading Yeneta...</p>
-      </div>
-    );
-  }
-
-  if (status === "unauthenticated") return null;
+  if (status === "loading" || status === "unauthenticated") return null;
 
   const handleNewSession = () => {
     const newSession = createNewSession(language);
@@ -94,67 +82,78 @@ export default function ChatPage() {
     }
   };
 
-  const addMessage = (msg: Omit<Message, "id" | "timestamp">) => {
-    setMessages((prev) => [...prev, {
-      ...msg,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      timestamp: Date.now(),
-    }]);
-  };
-
-  const handleSendMessage = async (text: string) => {
-    addMessage({ role: "user", content: text, type: "text" });
-    setIsTyping(true);
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, language, history: messages }),
-      });
-      const data: ApiResponse = await res.json();
-      if (data.error) throw new Error(data.error);
-      addMessage({ role: "assistant", content: data.reply || "Done.", type: "text" });
-    } catch (error) {
-      addMessage({ role: "assistant", content: language === "amharic" ? "ይቅርታ, ስህተት ተፈጥሯል።" : "An error occurred.", type: "text" });
-    } finally {
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
       setIsTyping(false);
     }
   };
 
-  const handleRetry = async (messageId: string) => {
-    const msgIndex = messages.findIndex(m => m.id === messageId);
-    if (msgIndex <= 0) return;
+  const handleEditMessage = (messageId: string, newText: string) => {
+    const index = messages.findIndex(m => m.id === messageId);
+    if (index === -1) return;
+    const newHistory = messages.slice(0, index);
+    setMessages(newHistory);
+    handleSendMessage(newText, undefined, newHistory);
+  };
+
+  const handleSendMessage = async (text: string, stagedFile?: File, customHistory?: Message[]) => {
+    const historyToUse = customHistory || messages;
     
-    const userMessage = messages[msgIndex - 1];
-    if (userMessage.role !== "user") return;
+    // If user sent a staged file from the quick-attach input, route it to document handler
+    if (stagedFile) {
+      await handleProcessDocument(stagedFile, "explain"); // defaults to explain action
+      return;
+    }
+
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, timestamp: Date.now(), type: "text" };
+    const assistantId = (Date.now() + 1).toString();
     
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-    
+    // Insert empty streaming assistant message
+    setMessages([...historyToUse, userMsg, { id: assistantId, role: "assistant", content: "", timestamp: Date.now(), type: "text", isStreaming: true } as any]);
     setIsTyping(true);
+
+    abortControllerRef.current = new AbortController();
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: userMessage.content, 
-          language, 
-          history: messages.slice(0, msgIndex - 1) 
-        }),
+        body: JSON.stringify({ message: text, language, history: historyToUse }),
+        signal: abortControllerRef.current.signal
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      addMessage({ role: "assistant", content: data.reply || "Error", type: "text" });
-    } catch {
-      addMessage({ role: "assistant", content: language === "amharic" ? "ይቅርታ, ስህተት ተፈጥሯል።" : "Error occurred.", type: "text" });
+
+      if (!res.body) throw new Error("No stream body returned from API");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let fullText = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        fullText += chunkValue;
+
+        // Update the streaming message in real-time
+        setMessages((prev) => 
+          prev.map(m => m.id === assistantId ? { ...m, content: fullText } : m)
+        );
+      }
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        setMessages((prev) => prev.map(m => m.id === assistantId ? { ...m, content: "Error generating response." } : m));
+      }
     } finally {
+      setMessages((prev) => prev.map(m => m.id === assistantId ? { ...m, isStreaming: false } : m));
       setIsTyping(false);
     }
   };
 
   const handleProcessDocument = async (file: File, action: DocumentAction) => {
     setIsProcessingDoc(true);
-    setShowUpload(false);
+    setShowUpload(false); 
 
     const isImage = file.type.startsWith("image/");
     const endpoint = isImage ? "/api/upload" : "/api/document";
@@ -164,7 +163,7 @@ export default function ChatPage() {
       quiz: language === "amharic" ? "በዚህ ፈትነኝ" : "Quiz me on this",
     };
 
-    addMessage({ role: "user", content: actionMap[action], type: isImage ? "image" : "document", fileName: file.name });
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", content: actionMap[action], timestamp: Date.now(), type: isImage ? "image" : "document", fileName: file.name }]);
     setIsTyping(true);
 
     try {
@@ -178,12 +177,12 @@ export default function ChatPage() {
       if (data.error) throw new Error(data.error);
 
       if (action === "quiz" && data.quiz) {
-        addMessage({ role: "assistant", content: JSON.stringify(data.quiz), type: "quiz" });
+        setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: "assistant", content: JSON.stringify(data.quiz), timestamp: Date.now(), type: "quiz" }]);
       } else {
-        addMessage({ role: "assistant", content: data.explanation || data.response || "Done.", type: "text" });
+        setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: "assistant", content: data.explanation || data.response || "Done.", timestamp: Date.now(), type: "text" }]);
       }
     } catch (error) {
-      addMessage({ role: "assistant", content: language === "amharic" ? "ፋይሉን ማንበብ አልተቻለም።" : "Failed to process the file.", type: "text" });
+      setMessages(prev => [...prev, { id: (Date.now()+1).toString(), role: "assistant", content: "Failed to process the file.", timestamp: Date.now(), type: "text" }]);
     } finally {
       setIsProcessingDoc(false);
       setIsTyping(false);
@@ -193,40 +192,24 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar 
-        sessions={sessionsList}
-        currentSessionId={currentSessionId}
-        onSelect={handleLoadSession}
-        onNew={handleNewSession}
-        onDelete={handleDeleteSession}
-        language={language}
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
+        sessions={sessionsList} currentSessionId={currentSessionId}
+        onSelect={handleLoadSession} onNew={handleNewSession} onDelete={handleDeleteSession}
+        language={language} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen}
       />
-
       <div className="flex-1 flex flex-col w-full h-full relative">
-        <div className="md:hidden absolute top-3 left-4 z-50">
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-600"
-          >
-            <Menu size={20} />
-          </button>
+        <div className="md:block pl-12 md:pl-0">
+          <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(true)} />
         </div>
-
-        <div className="md:block pl-14 md:pl-0">
-          <Navbar language={language} setLanguage={setLanguage} />
-        </div>
-
         <ChatWindow
-          messages={messages} language={language} isTyping={isTyping}
+          messages={messages} language={language} isTyping={isTyping && !messages.some(m => (m as any).isStreaming)}
           showUpload={showUpload} setShowUpload={setShowUpload}
           onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
-          onRetry={handleRetry}
+          onRetry={(id) => { /* Retry logic uses edit logic under hood now */ handleEditMessage(id, messages[messages.findIndex(m=>m.id===id)-1]?.content || "") }}
+          onEditMessage={handleEditMessage}
         />
-        
         <ChatInput
           onSend={handleSendMessage} onToggleUpload={() => setShowUpload(!showUpload)}
-          language={language} isLoading={isTyping || isProcessingDoc}
+          language={language} isLoading={isTyping || isProcessingDoc} onStopGeneration={stopGeneration}
         />
       </div>
     </div>
