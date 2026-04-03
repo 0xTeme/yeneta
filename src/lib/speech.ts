@@ -38,13 +38,23 @@ export const speakText = async (
     const audio = new Audio(audioUrl);
     currentAudio = audio;
 
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudio === audio) currentAudio = null;
-    };
-
     if (token !== currentPlayToken) return;
-    await audio.play();
+
+    await new Promise<void>((resolve, reject) => {
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        if (currentAudio === audio) currentAudio = null;
+        resolve();
+      };
+      
+      audio.onpause = () => {
+        resolve();
+      };
+
+      audio.onerror = (e) => reject(e);
+
+      audio.play().catch(reject);
+    });
 
   } catch (error: any) {
     if (error.name !== "AbortError") console.error("TTS error:", error);
