@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { MessageSquare, Plus, Trash2, FolderPlus, Folder as FolderIcon, LogOut, ChevronDown, ChevronRight, X } from "lucide-react";
 import { Language } from "@/types";
 import { useSession, signOut } from "next-auth/react";
@@ -27,6 +27,16 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
   const [modal, setModal] = useState<{ type: ModalType, payload?: string }>({ type: 'none' });
   const [newFolderName, setNewFolderName] = useState("");
   const [folderError, setFolderError] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && modal.type !== 'none') {
+        setModal({ type: 'none' });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modal.type]);
 
   const groupedSessions = sessions.reduce((acc, s) => {
     const f = s.folder || "uncategorized";
@@ -137,6 +147,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
                 type="text" 
                 value={newFolderName} 
                 onChange={e => { setNewFolderName(e.target.value); setFolderError(''); }} 
+                onKeyDown={e => e.key === 'Enter' && submitAddFolder()}
                 placeholder={isAmharic ? "የአቃፊ ስም..." : "Folder name..."}
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-sm" 
               />

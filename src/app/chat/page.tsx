@@ -49,6 +49,17 @@ export default function ChatPage() {
   const isHydratingRef = useRef(true);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (moveModalState.isOpen) setMoveModalState({ isOpen: false, sessionId: null });
+        if (showProfileModal && userProfile) setShowProfileModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [moveModalState.isOpen, showProfileModal, userProfile]);
+
+  useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
@@ -433,6 +444,7 @@ export default function ChatPage() {
                   type="text" 
                   value={newFolderName}
                   onChange={e => setNewFolderName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && executeCreateAndMove()}
                   placeholder="New folder name..."
                   className="flex-1 p-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] dark:text-white"
                 />
