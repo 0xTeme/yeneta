@@ -30,6 +30,7 @@ export interface UserProfile {
 
 export interface UserProfileData {
   gender: "male" | "female";
+  aiVoice: "male" | "female";
   role: string;
   level: string;
 }

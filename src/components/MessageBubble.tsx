@@ -17,6 +17,7 @@ interface ExtendedMessage extends Message {
 interface Props {
   message: ExtendedMessage;
   language: Language;
+  aiVoice: "male" | "female";
   onEdit?: (id: string, newText: string) => void;
   onRetry?: (id: string) => void;
   onTranslate?: (id: string, text: string) => void;
@@ -44,7 +45,7 @@ const CodeBlock = ({ match, codeString, children, className, ...props }: any) =>
   );
 };
 
-export default function MessageBubble({ message, language, onEdit, onRetry, onTranslate }: Props) {
+export default function MessageBubble({ message, language, aiVoice, onEdit, onRetry, onTranslate }: Props) {
   const isUser = message.role === "user";
   const [copiedText, setCopiedText] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -170,7 +171,7 @@ export default function MessageBubble({ message, language, onEdit, onRetry, onTr
           {/* AI ASSISTANT ACTIONS */}
           {!isUser && !message.isStreaming && (
             <>
-              <SpeakButton text={message.content} language={language} />
+              <SpeakButton text={message.content} language={language} gender={aiVoice} />
               
               <button onClick={handleTranslate} disabled={isTranslating} className="hover:text-[#1a7a4c] flex items-center gap-1 text-[11px] font-medium transition-colors disabled:opacity-50">
                 {isTranslating ? <RefreshCw size={14} className="animate-spin" /> : <Languages size={14}/>} {isTranslating ? (language === "amharic" ? "ትርጉም..." : "Translating...") : (language === "amharic" ? "ትርጉም" : "Translate")}

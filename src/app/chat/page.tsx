@@ -38,7 +38,7 @@ export default function ChatPage() {
   
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [tempProfile, setTempProfile] = useState<UserProfileData>({ gender: "female", role: "student", level: "high_school" });
+  const [tempProfile, setTempProfile] = useState<UserProfileData>({ gender: "female", aiVoice: "female", role: "student", level: "high_school" });
   const [customRole, setCustomRole] = useState("");
   const [customLevel, setCustomLevel] = useState("");
 
@@ -68,6 +68,7 @@ export default function ChatPage() {
   const handleSaveProfile = () => {
     const finalProfile = {
       gender: tempProfile.gender,
+      aiVoice: tempProfile.aiVoice || "female",
       role: tempProfile.role === "other" ? (customRole.trim() || "Rather not say") : tempProfile.role,
       level: tempProfile.level === "other" ? (customLevel.trim() || "Rather not say") : tempProfile.level,
     };
@@ -356,6 +357,13 @@ export default function ChatPage() {
                   <option value="male">Male (ወንድ)</option>
                 </select>
               </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">AI Reader Voice</label>
+                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e]" value={tempProfile.aiVoice || "female"} onChange={e => setTempProfile({...tempProfile, aiVoice: e.target.value as any})}>
+                  <option value="female">Female Voice</option>
+                  <option value="male">Male Voice</option>
+                </select>
+              </div>
             </div>
 
             <button onClick={handleSaveProfile} className="w-full bg-[#1a7a4c] text-white py-4 rounded-xl font-bold hover:bg-[#135c39] transition-colors shadow-lg">
@@ -438,7 +446,7 @@ export default function ChatPage() {
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <ChatWindow
-          messages={messages} language={language} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
+          messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
           showUpload={showUpload} setShowUpload={setShowUpload} onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
           onRetry={(id) => handleEditMessage(id, messages[messages.findIndex((m) => m.id === id) - 1]?.content || "")}
           onEditMessage={handleEditMessage}

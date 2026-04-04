@@ -8,6 +8,7 @@ import DocumentUpload from "./DocumentUpload";
 interface Props {
   messages: Message[];
   language: Language;
+  aiVoice: "male" | "female";
   isTyping: boolean;
   showUpload: boolean;
   setShowUpload: (val: boolean) => void;
@@ -18,7 +19,7 @@ interface Props {
   onTranslate?: (messageId: string, text: string) => void;
 }
 
-export default function ChatWindow({ messages, language, isTyping, showUpload, setShowUpload, onProcessDocument, isUploading, onRetry, onEditMessage, onTranslate }: Props) {
+export default function ChatWindow({ messages, language, aiVoice, isTyping, showUpload, setShowUpload, onProcessDocument, isUploading, onRetry, onEditMessage, onTranslate }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function ChatWindow({ messages, language, isTyping, showUpload, s
       ) : (
         <div className="max-w-3xl mx-auto flex flex-col w-full pb-6">
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} language={language} onRetry={onRetry} onEdit={onEditMessage} onTranslate={onTranslate} />
+            <MessageBubble key={msg.id} message={msg} language={language} aiVoice={aiVoice} onRetry={onRetry} onEdit={onEditMessage} onTranslate={onTranslate} />
           ))}
           {isTyping && (
             <div className="flex justify-start my-3">
