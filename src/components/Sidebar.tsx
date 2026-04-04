@@ -19,10 +19,11 @@ interface Props {
   onDelete: (id: string) => void;
   onCreateFolder: (name: string) => void;
   onDeleteFolder: (name: string) => void;
+  onMove: (id: string) => void;
   language: Language;
 }
 
-export default function Sidebar({ sessions, folders, currentSessionId, onSelect, onNew, onDelete, onCreateFolder, onDeleteFolder, language }: Props) {
+export default function Sidebar({ sessions, folders, currentSessionId, onSelect, onNew, onDelete, onCreateFolder, onDeleteFolder, onMove, language }: Props) {
   const isAmharic = language === "amharic";
 
   const groupedSessions = sessions.reduce((acc, session) => {
@@ -75,7 +76,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
                 <div className="text-[10px] text-gray-500 p-2 text-center italic">Empty</div>
               )}
               {(groupedSessions[folderName] || []).map((session) => (
-                <SessionItem key={session.id} session={session} isCurrent={currentSessionId === session.id} onSelect={onSelect} onDelete={onDelete} />
+                <SessionItem key={session.id} session={session} isCurrent={currentSessionId === session.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} />
               ))}
             </div>
           </div>
@@ -87,7 +88,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
           </h3>
           <div className="space-y-1">
             {(groupedSessions["uncategorized"] || []).map((session) => (
-              <SessionItem key={session.id} session={session} isCurrent={currentSessionId === session.id} onSelect={onSelect} onDelete={onDelete} />
+              <SessionItem key={session.id} session={session} isCurrent={currentSessionId === session.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} />
             ))}
           </div>
         </div>
@@ -97,7 +98,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
   );
 }
 
-function SessionItem({ session, isCurrent, onSelect, onDelete }: any) {
+function SessionItem({ session, isCurrent, onSelect, onDelete, onMove }: any) {
   return (
     <div
       className={`group flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors ${
@@ -109,13 +110,22 @@ function SessionItem({ session, isCurrent, onSelect, onDelete }: any) {
         <MessageSquare size={14} className="flex-shrink-0 opacity-70" />
         <div className="truncate text-xs font-medium">{session.title || "New Chat"}</div>
       </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); if(window.confirm("Delete chat?")) onDelete(session.id); }}
-        className="text-gray-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-        title="Delete Chat"
-      >
-        <Trash2 size={12} />
-      </button>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={(e) => { e.stopPropagation(); onMove(session.id); }}
+          className="text-gray-400 hover:text-blue-300 p-1"
+          title="Move to Folder"
+        >
+          <FolderIcon size={12} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); if(window.confirm("Delete chat?")) onDelete(session.id); }}
+          className="text-gray-400 hover:text-red-300 p-1"
+          title="Delete Chat"
+        >
+          <Trash2 size={12} />
+        </button>
+      </div>
     </div>
   );
 }
