@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Language } from "@/types";
 import LanguageToggle from "./LanguageToggle";
-import { GraduationCap, Menu, Square } from "lucide-react";
+import { GraduationCap, Menu, Square, Moon, Sun } from "lucide-react";
 import { subscribeToTTS, stopSpeaking } from "@/lib/speech";
+import { useTheme } from "next-themes";
 
 interface Props {
   language: Language;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function Navbar({ language, setLanguage, onMenuClick }: Props) {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const unsubscribe = subscribeToTTS(setIsAudioPlaying);
@@ -50,6 +52,13 @@ export default function Navbar({ language, setLanguage, onMenuClick }: Props) {
             <Square size={12} fill="currentColor" /> Stop Audio
           </button>
         )}
+
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
 
         <LanguageToggle language={language} setLanguage={setLanguage} />
       </div>
