@@ -39,6 +39,8 @@ export default function ChatPage() {
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempProfile, setTempProfile] = useState<UserProfileData>({ gender: "female", role: "student", level: "high_school" });
+  const [customRole, setCustomRole] = useState("");
+  const [customLevel, setCustomLevel] = useState("");
 
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [sessionsList, setSessionsList] = useState<any[]>([]);
@@ -64,8 +66,14 @@ export default function ChatPage() {
   }, []);
 
   const handleSaveProfile = () => {
-    localStorage.setItem("yeneta_profile", JSON.stringify(tempProfile));
-    setUserProfile(tempProfile);
+    const finalProfile = {
+      gender: tempProfile.gender,
+      role: tempProfile.role === "other" ? (customRole.trim() || "Rather not say") : tempProfile.role,
+      level: tempProfile.level === "other" ? (customLevel.trim() || "Rather not say") : tempProfile.level,
+    };
+    
+    localStorage.setItem("yeneta_profile", JSON.stringify(finalProfile));
+    setUserProfile(finalProfile);
     setShowProfileModal(false);
   };
 
@@ -320,24 +328,30 @@ export default function ChatPage() {
             <div className="space-y-4 mb-8">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">I am a...</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c]" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
+                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e]" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
                   <option value="student">Student</option>
                   <option value="teacher">Teacher</option>
                   <option value="other">Other</option>
                 </select>
+                {tempProfile.role === "other" && (
+                  <input type="text" placeholder="Rather not say" value={customRole} onChange={(e) => setCustomRole(e.target.value)} className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] animate-in slide-in-from-top-1" />
+                )}
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Education Level</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c]" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
+                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e]" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
                   <option value="primary">Primary School</option>
                   <option value="high_school">High School</option>
                   <option value="university">University / College</option>
                   <option value="other">Other</option>
                 </select>
+                {tempProfile.level === "other" && (
+                  <input type="text" placeholder="Rather not say" value={customLevel} onChange={(e) => setCustomLevel(e.target.value)} className="w-full mt-2 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] animate-in slide-in-from-top-1" />
+                )}
               </div>
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Gender (for Amharic grammar)</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c]" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
+                <select className="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e]" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
                   <option value="female">Female (ሴት)</option>
                   <option value="male">Male (ወንድ)</option>
                 </select>
