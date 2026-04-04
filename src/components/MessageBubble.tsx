@@ -171,7 +171,7 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
           {/* AI ASSISTANT ACTIONS */}
           {!isUser && !message.isStreaming && (
             <>
-              <SpeakButton text={message.content} language={language} gender={aiVoice} />
+              <SpeakButton text={message.content} gender={aiVoice} />
               
               <button onClick={handleTranslate} disabled={isTranslating} className="hover:text-[#1a7a4c] flex items-center gap-1 text-[11px] font-medium transition-colors disabled:opacity-50">
                 {isTranslating ? <RefreshCw size={14} className="animate-spin" /> : <Languages size={14}/>} {isTranslating ? (language === "amharic" ? "ትርጉም..." : "Translating...") : (language === "amharic" ? "ትርጉም" : "Translate")}

@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { Volume2, Square } from "lucide-react";
 import { speakText, stopSpeaking, subscribeToTTS } from "@/lib/speech";
-import { Language } from "@/types";
 
-export default function SpeakButton({ text, language, gender }: { text: string; language: Language; gender: "male" | "female" }) {
+export default function SpeakButton({ text, gender }: { text: string; gender: "male" | "female" }) {
   const [isGloballyPlaying, setIsGloballyPlaying] = useState(false);
   const [isThisSpecificButtonPlaying, setIsThisSpecificButtonPlaying] = useState(false);
 
@@ -22,7 +21,8 @@ export default function SpeakButton({ text, language, gender }: { text: string; 
       stopSpeaking();
     } else {
       setIsThisSpecificButtonPlaying(true);
-      await speakText(text, language, gender);
+      const detectedLanguage = /[ሀ-፿]/.test(text) ? "amharic" : "english";
+      await speakText(text, detectedLanguage, gender);
     }
   };
 
