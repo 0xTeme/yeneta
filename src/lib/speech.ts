@@ -19,7 +19,17 @@ export const speakText = async (
   const token = ++currentPlayToken;
   isPlayingQueue = true;
 
-  const rawChunks = text.match(/[^.?!።\n]+[.?!።\n]*/g)?.map(s => s.trim()).filter(s => s) || [text];
+  const cleanText = text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/[*_~`#]/g, "")
+    .replace(/^>+/gm, "")
+    .replace(/^[-+]\s/gm, "")
+    .replace(/^\d+\.\s/gm, "")
+    .replace(/\n+/g, " ")
+    .trim();
+
+  const rawChunks = cleanText.match(/[^.?!።]+[.?!።]*/g)?.map(s => s.trim()).filter(s => s) || [cleanText];
   
   const chunks: string[] = [];
   let currentChunk = "";
