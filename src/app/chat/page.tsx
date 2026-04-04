@@ -22,6 +22,8 @@ import {
   moveSessionToFolder,
 } from "@/lib/storage";
 
+import { stopSpeaking } from "@/lib/speech";
+
 export default function ChatPage() {
   const { status } = useSession();
   const router = useRouter();
@@ -105,6 +107,7 @@ export default function ChatPage() {
   if (status === "loading" || status === "unauthenticated") return null;
 
   const handleNewSession = (folderName?: string) => {
+    stopSpeaking();
     try {
       const newSession = createNewSession(language);
       if (folderName) newSession.folder = folderName;
@@ -121,6 +124,7 @@ export default function ChatPage() {
   };
 
   const handleLoadSession = (id: string) => {
+    stopSpeaking();
     const session = getSession(id);
     if (session) {
       isHydratingRef.current = true;
