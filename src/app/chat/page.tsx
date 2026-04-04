@@ -262,7 +262,7 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = async (text: string, stagedFile?: File, customHistory?: Message[]) => {
-    const historyToUse = customHistory || messages;
+    const localHistory = customHistory || messages;
 
     if (stagedFile) {
       await handleProcessDocument(stagedFile, "explain");
@@ -273,7 +273,7 @@ export default function ChatPage() {
     const assistantId = (Date.now() + 1).toString();
 
     setMessages(() => [
-      ...historyToUse,
+      ...localHistory,
       userMsg,
       { id: assistantId, role: "assistant", content: "", timestamp: Date.now(), type: "text", isStreaming: true } as Message,
     ]);
@@ -281,11 +281,35 @@ export default function ChatPage() {
     setIsTyping(true);
     abortControllerRef.current = new AbortController();
 
+    let apiHistory = [...localHistory];
+    const currentMeta = sessionsList.find((s) => s.id === currentSessionId);
+    
+    if (currentMeta?.folder) {
+      const otherSessions = sessionsList.filter((s) => s.folder === currentMeta.folder && s.id !== currentSessionId);
+      const otherMessages = otherSessions.flatMap((s) => s.messages || []);
+      const combinedHistory = [...otherMessages, ...localHistory].sort((a, b) => a.timestamp - b.timestamp);
+      apiHistory = combinedHistory.slice(-40);
+    }
+
+    const cleanHistory: Message[] = [];
+    let expectedRole = "user";
+
+    for (const msg of apiHistory) {
+      if (msg.role === expectedRole && msg.content?.trim()) {
+        cleanHistory.push(msg);
+        expectedRole = expectedRole === "user" ? "assistant" : "user";
+      }
+    }
+
+    if (cleanHistory.length > 0 && cleanHistory[cleanHistory.length - 1].role === "user") {
+      cleanHistory.pop();
+    }
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, language, history: historyToUse, userProfile }),
+        body: JSON.stringify({ message: text, language, history: cleanHistory, userProfile }),
         signal: abortControllerRef.current.signal,
       });
 
