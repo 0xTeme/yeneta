@@ -1,24 +1,37 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { model } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   try {
     const { text, targetLanguage } = await req.json();
-
-    if (!text || !text.trim()) {
-      return NextResponse.json({ error: "Text required" }, { status: 400 });
-    }
-
-    const targetLang = targetLanguage === "amharic" ? "Amharic" : "English";
     
-    const prompt = `Translate the following text to ${targetLang}. Only provide the translation, nothing else:\n\n${text}`;
+    if (!text) return new Response("No text provided", { status: 400 });
 
-    const result = await model.generateContent(prompt);
-    const translation = result.response.text();
+    const prompt = `Translate the following text to ${targetLanguage}. Provide ONLY the translated text, preserving the exact original markdown formatting (bolding, lists, code blocks). Do not add any conversational filler, explanations, or quotes around it.\n\nText to translate:\n${text}`;
 
-    return NextResponse.json({ translation });
+    const result = await model.generateContentStream(prompt);
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            controller.enqueue(new TextEncoder().encode(chunk.text()));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error) {
-    console.error("Translation API error:", error);
-    return NextResponse.json({ error: "Translation failed" }, { status: 500 });
+    console.error("Translation error:", error);
+    return new Response("Translation failed", { status: 500 });
   }
 }

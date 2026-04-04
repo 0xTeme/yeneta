@@ -33,7 +33,6 @@ export default function ChatPage() {
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -175,29 +174,40 @@ export default function ChatPage() {
     if (abortControllerRef.current) { abortControllerRef.current.abort(); setIsTyping(false); }
   };
 
-  const handleTranslateMessage = async (messageId: string, text: string) => {
-    const amharicRegex = /[\u1200-\u137F]/;
-    const targetLanguage = amharicRegex.test(text) ? "english" : "amharic";
+  const handleTranslateMessage = async (id: string, text: string) => {
+    const targetLanguage = /[ሀ-፿]/.test(text) ? "english" : "amharic";
     
+    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: "", isStreaming: true } : m));
+
+    abortControllerRef.current = new AbortController();
+
     try {
       const res = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, targetLanguage }),
+        signal: abortControllerRef.current.signal,
       });
-      
-      const data = await res.json();
-      
-      if (data.translation) {
-        setMessages((prev) => 
-          prev.map((m) => m.id === messageId 
-            ? { ...m, content: m.content + "\n\n--- Translation ---\n" + data.translation } 
-            : m
-          )
-        );
+
+      if (!res.body) throw new Error("No stream returned");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let fullText = "";
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        fullText += decoder.decode(value || new Uint8Array());
+        setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: fullText } : m));
       }
-    } catch (error) {
-      console.error("Translation failed:", error);
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: "Translation failed." } : m));
+      }
+    } finally {
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, isStreaming: false } : m));
     }
   };
 
@@ -389,22 +399,20 @@ export default function ChatPage() {
         </div>
       )}
 
-      <div className={`${isSidebarOpen ? (isSidebarCollapsed ? "w-16" : "w-64") : "w-0"} transition-all duration-300 ease-in-out shrink-0 relative z-40 h-full overflow-hidden bg-[#1a1a2e] shadow-2xl md:shadow-none`}>
-        <div className={`${isSidebarCollapsed ? "w-16" : "w-64"} h-full absolute inset-0`}>
-          <Sidebar
-            sessions={sessionsList}
-            folders={foldersList}
-            currentSessionId={currentSessionId}
-            onSelect={handleLoadSession}
-            onNew={handleNewSession}
-            onDelete={handleDeleteSession}
-            onCreateFolder={handleCreateFolder}
-            onDeleteFolder={handleDeleteFolder}
-            onMove={openMoveModal}
-            language={language}
-            isCollapsed={isSidebarCollapsed}
-          />
-        </div>
+      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 relative z-40 h-full bg-[#1a1a2e] shadow-2xl md:shadow-none`}>
+        <Sidebar
+          sessions={sessionsList}
+          folders={foldersList}
+          currentSessionId={currentSessionId}
+          onSelect={handleLoadSession}
+          onNew={handleNewSession}
+          onDelete={handleDeleteSession}
+          onCreateFolder={handleCreateFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onMove={openMoveModal}
+          language={language}
+          isCollapsed={!isSidebarOpen}
+        />
       </div>
 
       {isSidebarOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
