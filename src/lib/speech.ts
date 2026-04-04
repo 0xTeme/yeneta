@@ -3,7 +3,13 @@ let ttsAbortController: AbortController | null = null;
 let currentPlayToken = 0;
 
 interface SpeechRecognitionEvent extends Event {
-  results: { [index: number]: { [index: number]: { transcript: string } } };
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
 }
 
 export const speakText = async (
@@ -14,10 +20,9 @@ export const speakText = async (
   if (typeof window === "undefined") return;
 
   stopSpeaking();
-  
+
   const abortCtrl = new AbortController();
   ttsAbortController = abortCtrl;
-  
   const token = ++currentPlayToken;
 
   try {
@@ -38,41 +43,54 @@ export const speakText = async (
     const audio = new Audio(audioUrl);
     currentAudio = audio;
 
-    if (token !== currentPlayToken) return;
-
     await new Promise<void>((resolve, reject) => {
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
         if (currentAudio === audio) currentAudio = null;
         resolve();
       };
-      
+
       audio.onpause = () => {
+        URL.revokeObjectURL(audioUrl);
+        if (currentAudio === audio) currentAudio = null;
         resolve();
       };
 
-      audio.onerror = (e) => reject(e);
+      audio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        if (currentAudio === audio) currentAudio = null;
+        reject(new Error("Audio playback failed"));
+      };
+
+      if (token !== currentPlayToken) {
+        URL.revokeObjectURL(audioUrl);
+        resolve();
+        return;
+      }
 
       audio.play().catch(reject);
     });
-
   } catch (error: any) {
-    if (error.name !== "AbortError") console.error("TTS error:", error);
+    if (error.name !== "AbortError") {
+      console.error("TTS error:", error);
+    }
   }
 };
 
 export const stopSpeaking = (): void => {
   currentPlayToken++;
-  
+
   if (ttsAbortController) {
     ttsAbortController.abort();
     ttsAbortController = null;
   }
+
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
+
   if (typeof window !== "undefined" && window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
@@ -81,26 +99,64 @@ export const stopSpeaking = (): void => {
 export const startListening = (
   language: "amharic" | "english",
   onResult: (text: string) => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  onEnd: () => void
 ): (() => void) | null => {
   if (typeof window === "undefined") return null;
 
-  const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const SpeechRecognitionAPI =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
   if (!SpeechRecognitionAPI) {
-    onError("Speech recognition not supported");
+    onError("Speech recognition is not supported. Please use Chrome or Edge.");
+    onEnd();
     return null;
   }
 
-  const recognition = new SpeechRecognitionAPI();
-  recognition.lang = language === "amharic" ? "am-ET" : "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  try {
+    const recognition = new SpeechRecognitionAPI();
 
-  recognition.onresult = (event: SpeechRecognitionEvent) => {
-    onResult(event.results[0][0].transcript);
-  };
-  recognition.onerror = (event: any) => onError(event.error);
+    recognition.lang = language === "amharic" ? "am-ET" : "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-  recognition.start();
-  return () => recognition.stop();
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        onResult(transcript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      const errorMap: Record<string, string> = {
+        "no-speech": "No speech detected. Please speak louder.",
+        aborted: "Microphone was stopped.",
+        "audio-capture": "No microphone found.",
+        "not-allowed": "Microphone permission denied. Check browser settings.",
+        network: "Network error. Speech-to-text requires internet.",
+      };
+      
+      if (event.error !== "aborted" && event.error !== "no-speech") {
+        onError(errorMap[event.error] || `Mic error: ${event.error}`);
+      }
+    };
+
+    recognition.onend = () => {
+      onEnd(); 
+    };
+
+    recognition.start();
+
+    return () => {
+      try {
+        recognition.stop();
+      } catch {}
+    };
+  } catch (error) {
+    onError("Failed to start microphone.");
+    onEnd();
+    return null;
+  }
 };
