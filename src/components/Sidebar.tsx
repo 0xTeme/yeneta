@@ -33,6 +33,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
   return (
     <div className="flex flex-col w-full h-full bg-[#1a1a2e] text-white overflow-hidden">
       
+      {/* Top Action Buttons */}
       <div className={`p-4 border-b border-gray-700 flex shrink-0 ${isCollapsed ? "flex-col items-center gap-3" : "gap-2"}`}>
         <button onClick={() => onNew()} title="New Chat" className={`flex items-center justify-center gap-2 bg-[#1a7a4c] hover:bg-[#135c39] transition-all rounded-lg font-medium text-sm shadow-md ${isCollapsed ? "w-10 h-10 p-0" : "flex-1 py-2.5"}`}>
           <Plus size={18} /> {!isCollapsed && (isAmharic ? "አዲስ" : "New Chat")}
@@ -42,14 +43,13 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
         </button>
       </div>
 
+      {/* Chat List (Fills available space, hidden when collapsed) */}
       <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
-        {folders.map((folderName) => (
-          <div key={folderName} className={`mb-2 bg-black/20 rounded-xl border border-gray-800 ${isCollapsed ? "p-1" : "overflow-hidden"}`}>
-            <div className={`flex justify-between items-center px-3 py-2 ${isCollapsed ? "justify-center" : "bg-gray-800/80"}`} title={`Folder: ${folderName}`}>
-              {isCollapsed ? (
-                 <FolderIcon size={18} className="text-[#f0a500]" />
-              ) : (
-                <>
+        {!isCollapsed && (
+          <>
+            {folders.map((folderName) => (
+              <div key={folderName} className="mb-2 bg-black/20 rounded-xl border border-gray-800 overflow-hidden">
+                <div className="flex justify-between items-center px-3 py-2 bg-gray-800/80" title={`Folder: ${folderName}`}>
                   <span className="text-xs font-bold text-gray-300 uppercase tracking-wide flex items-center gap-2">
                     <FolderIcon size={12} className="text-[#f0a500]" /> {folderName}
                   </span>
@@ -57,31 +57,30 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
                     <button onClick={() => onNew(folderName)} className="p-1 hover:text-[#1a7a4c] hover:bg-white/10 rounded"><Plus size={14}/></button>
                     <button onClick={() => { if(window.confirm("Delete folder?")) onDeleteFolder(folderName); }} className="p-1 hover:text-red-500 hover:bg-white/10 rounded"><Trash2 size={14}/></button>
                   </div>
-                </>
-              )}
-            </div>
-            <div className="p-1">
-              {(groupedSessions[folderName] || []).map((s) => (
-                <SessionItem key={s.id} session={s} isCurrent={currentSessionId === s.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} isCollapsed={isCollapsed} />
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <div className="px-1">
-          {!isCollapsed && (
-            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-2">
-              {isAmharic ? "ያልተመደቡ ውይይቶች" : "Recent Chats"}
-            </h3>
-          )}
-          <div className="space-y-1">
-            {(groupedSessions["uncategorized"] || []).map((s) => (
-              <SessionItem key={s.id} session={s} isCurrent={currentSessionId === s.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} isCollapsed={isCollapsed} />
+                </div>
+                <div className="p-1">
+                  {(groupedSessions[folderName] || []).map((s) => (
+                    <SessionItem key={s.id} session={s} isCurrent={currentSessionId === s.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} />
+                  ))}
+                </div>
+              </div>
             ))}
-          </div>
-        </div>
+
+            <div className="px-1">
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-2">
+                {isAmharic ? "ያልተመደቡ ውይይቶች" : "Recent Chats"}
+              </h3>
+              <div className="space-y-1">
+                {(groupedSessions["uncategorized"] || []).map((s) => (
+                  <SessionItem key={s.id} session={s} isCurrent={currentSessionId === s.id} onSelect={onSelect} onDelete={onDelete} onMove={onMove} />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
+      {/* Pinned Bottom User Profile */}
       <div 
         className={`p-3 border-t border-gray-700 hover:bg-white/5 transition-colors cursor-pointer flex items-center shrink-0 ${isCollapsed ? "justify-center" : "justify-between"}`} 
         onClick={() => { if(window.confirm("Sign out of Yeneta?")) signOut(); }} 
@@ -103,25 +102,21 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
   );
 }
 
-function SessionItem({ session, isCurrent, onSelect, onDelete, onMove, isCollapsed }: any) {
+function SessionItem({ session, isCurrent, onSelect, onDelete, onMove }: any) {
   return (
     <div
       title={session.title}
-      className={`group flex items-center p-2.5 rounded-lg cursor-pointer transition-colors ${
-        isCollapsed ? "justify-center" : "justify-between"
-      } ${isCurrent ? "bg-[#1a7a4c] text-white shadow-md" : "hover:bg-white/5 text-gray-300"}`}
+      className={`group flex items-center p-2.5 rounded-lg cursor-pointer transition-colors justify-between ${isCurrent ? "bg-[#1a7a4c] text-white shadow-md" : "hover:bg-white/5 text-gray-300"}`}
       onClick={() => onSelect(session.id)}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <MessageSquare size={isCollapsed ? 18 : 14} className={`flex-shrink-0 ${isCurrent ? "opacity-100" : "opacity-70"}`} />
-        {!isCollapsed && <div className="truncate text-xs font-medium">{session.title || "New Chat"}</div>}
+        <MessageSquare size={14} className={`flex-shrink-0 ${isCurrent ? "opacity-100" : "opacity-70"}`} />
+        <div className="truncate text-xs font-medium">{session.title || "New Chat"}</div>
       </div>
-      {!isCollapsed && (
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={(e) => { e.stopPropagation(); onMove(session.id); }} className="text-gray-400 hover:text-blue-300 p-1"><FolderIcon size={12} /></button>
-          <button onClick={(e) => { e.stopPropagation(); if(window.confirm("Delete chat?")) onDelete(session.id); }} className="text-gray-400 hover:text-red-300 p-1"><Trash2 size={12} /></button>
-        </div>
-      )}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={(e) => { e.stopPropagation(); onMove(session.id); }} className="text-gray-400 hover:text-blue-300 p-1"><FolderIcon size={12} /></button>
+        <button onClick={(e) => { e.stopPropagation(); if(window.confirm("Delete chat?")) onDelete(session.id); }} className="text-gray-400 hover:text-red-300 p-1"><Trash2 size={12} /></button>
+      </div>
     </div>
   );
 }
