@@ -438,6 +438,17 @@ export default function ChatPage() {
           onMove={openMoveModal}
           language={language}
           isCollapsed={!isSidebarOpen}
+          onOpenSettings={() => {
+            if (userProfile) {
+              setTempProfile({
+                gender: userProfile.gender as any,
+                aiVoice: userProfile.aiVoice as any,
+                role: ["student", "teacher"].includes(userProfile.role) ? userProfile.role : "other",
+                level: ["primary", "high_school", "university"].includes(userProfile.level) ? userProfile.level : "other",
+              });
+            }
+            setShowProfileModal(true);
+          }}
         />
       </div>
 

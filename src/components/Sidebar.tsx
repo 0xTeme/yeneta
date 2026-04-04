@@ -13,11 +13,12 @@ interface Props {
   onDelete: (id: string) => void; onCreateFolder: (name: string) => void;
   onDeleteFolder: (name: string) => void; onMove: (id: string) => void;
   language: Language; isCollapsed: boolean; 
+  onOpenSettings: () => void;
 }
 
 type ModalType = 'none' | 'addFolder' | 'deleteFolder' | 'deleteChat' | 'account' | 'deleteAccount';
 
-export default function Sidebar({ sessions, folders, currentSessionId, onSelect, onNew, onDelete, onCreateFolder, onDeleteFolder, onMove, language, isCollapsed }: Props) {
+export default function Sidebar({ sessions, folders, currentSessionId, onSelect, onNew, onDelete, onCreateFolder, onDeleteFolder, onMove, language, isCollapsed, onOpenSettings }: Props) {
   const { data: session } = useSession();
   const isAmharic = language === "amharic";
 
@@ -195,6 +196,10 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
               <p className="text-gray-500 text-sm mb-6">{session?.user?.email || ""}</p>
               
               <div className="flex flex-col gap-3">
+                <button onClick={() => { setModal({type: 'none'}); onOpenSettings(); }} className="w-full py-3 rounded-xl font-bold text-[#1a7a4c] bg-green-50 hover:bg-green-100 transition-colors shadow-sm">
+                  {isAmharic ? "መቼቶች (Settings)" : "Profile Settings"}
+                </button>
+
                 <button onClick={() => signOut()} className="w-full py-3 rounded-xl font-bold text-[#1a1a2e] bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
                   {isAmharic ? "ውጣ (Sign Out)" : "Sign Out"}
                 </button>
