@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChatWindow from "@/components/ChatWindow";
 import ChatInput from "@/components/ChatInput";
+import DocumentUpload from "@/components/DocumentUpload";
 import Sidebar from "@/components/Sidebar";
 import { Message, Language, DocumentAction, ApiResponse, UserProfileData } from "@/types";
-import { Folder as FolderIcon, Loader2 } from "lucide-react";
+import { Folder as FolderIcon, Loader2, X, ChevronDown, CheckCircle2, LogOut, Trash2 } from "lucide-react";
 import { stopSpeaking } from "@/lib/speech";
 import {
   getDbProfile, saveDbProfile,
@@ -19,7 +20,7 @@ import {
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 
 export default function ChatPage() {
-  const { status } = useSession();
+  const { status, data: sessionData } = useSession();
   const router = useRouter();
 
   const [isInitializing, setIsInitializing] = useState(true);
@@ -102,6 +103,11 @@ export default function ChatPage() {
   useEffect(() => {
     if (isHydratingRef.current || isInitializing) return;
     if (!currentSessionId) return;
+
+    // CRITICAL FIX: Prevent database save spam during active stream.
+    // The effect will trigger one final time when isStreaming flips to false.
+    const isCurrentlyStreaming = messages.some((m) => m.isStreaming);
+    if (isCurrentlyStreaming) return;
 
     const currentMeta = sessionsList.find(s => s.id === currentSessionId);
     const firstUserMsg = messages.find(m => m.role === "user");
@@ -224,6 +230,7 @@ export default function ChatPage() {
     const targetLanguage = /[ሀ-፿]/.test(text) ? "english" : "amharic";
     setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: "", isStreaming: true } : m));
     abortControllerRef.current = new AbortController();
+
     try {
       const res = await fetch("/api/translate", {
         method: "POST",
@@ -231,11 +238,14 @@ export default function ChatPage() {
         body: JSON.stringify({ text, targetLanguage }),
         signal: abortControllerRef.current.signal,
       });
+
       if (!res.body) throw new Error("No stream returned");
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
       let fullText = "";
+
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
@@ -254,10 +264,13 @@ export default function ChatPage() {
   const handleEditMessage = (messageId: string, newText: string) => {
     const index = messages.findIndex((m) => m.id === messageId);
     if (index === -1) return;
+
     const msg = messages[index];
     const sliceIndex = msg.role === "assistant" ? Math.max(0, index - 1) : index;
+    
     const newHistory = messages.slice(0, sliceIndex);
     setMessages(newHistory);
+
     handleSendMessage(newText, undefined, newHistory);
   };
 
@@ -324,6 +337,7 @@ export default function ChatPage() {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         fullText += decoder.decode(value || new Uint8Array());
+        
         setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: fullText } : m));
       }
     } catch (error: any) {
@@ -336,9 +350,10 @@ export default function ChatPage() {
     }
   };
 
-  const handleProcessDocument = async (file: File, action: DocumentAction) => {
+  const handleProcessDocument = async (file: File, action: DocumentAction, questionCount?: number) => {
     setIsProcessingDoc(true);
     setShowUpload(false);
+
     const isImage = file.type.startsWith("image/");
     const endpoint = isImage ? "/api/upload" : "/api/document";
     
@@ -350,8 +365,15 @@ export default function ChatPage() {
       formData.append(isImage ? "image" : "document", file);
       formData.append("language", language);
       if (!isImage) formData.append("action", action);
+      if (!isImage && action === "quiz" && questionCount) formData.append("questionCount", questionCount.toString());
 
       const res = await fetch(endpoint, { method: "POST", body: formData });
+      
+      // CRITICAL FIX: Safe JSON parsing fallback for Vercel 413 Payload Too Large
+      if (!res.ok) {
+        throw new Error("Server rejected the file. It may be too large or invalid.");
+      }
+
       const data: ApiResponse = await res.json();
       
       if (action === "quiz" && data.quiz) {
@@ -359,8 +381,9 @@ export default function ChatPage() {
       } else {
         setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: data.explanation || data.response || "Done.", timestamp: Date.now(), type: "text" }]);
       }
-    } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: "Failed to process the file.", timestamp: Date.now(), type: "text" }]);
+
+    } catch (error: any) {
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: error.message || "Failed to process the file.", timestamp: Date.now(), type: "text" }]);
     } finally {
       setIsProcessingDoc(false);
       setIsTyping(false);
@@ -369,100 +392,147 @@ export default function ChatPage() {
 
   if (status === "loading" || status === "unauthenticated") return null;
 
-  // --- NEW: CLOUD LOADING SCREEN ---
   if (isInitializing) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-[#0f172a] flex-col gap-4">
-        <Loader2 className="w-12 h-12 text-[#1a7a4c] animate-spin" />
-        <h2 className="text-xl font-bold text-[#1a1a2e] dark:text-white">የኔታ</h2>
-        <p className="text-sm text-gray-500">Loading your study room...</p>
+      <div className="flex h-screen items-center justify-center bg-background flex-col gap-5">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-content tracking-tight font-headline">Yeneta</h2>
+          <p className="text-xs text-content-muted mt-2 font-label tracking-widest uppercase">Loading your study room...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-[#0f172a] relative font-noto">
+    <div className="flex h-screen overflow-hidden bg-background relative font-body text-content">
       
-      {/* USER PROFILE MODAL */}
+      {/* USER PROFILE MODAL / SETTINGS DRAWER */}
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-[#1a7a4c] dark:text-green-400 flex items-center justify-center rounded-full mx-auto mb-4 text-3xl">🎓</div>
-            <h2 className="text-2xl font-bold text-[#1a1a2e] dark:text-white mb-2 text-center">Welcome to Yeneta</h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm text-center">Let's personalize your AI learning experience.</p>
-            
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">I am a...</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e] dark:text-white" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher</option>
-                  <option value="other">Other</option>
-                </select>
-                {tempProfile.role === "other" && (
-                  <input type="text" placeholder="Rather not say" value={customRole} onChange={(e) => setCustomRole(e.target.value)} className="w-full mt-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] dark:text-white animate-in slide-in-from-top-1" />
-                )}
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Education Level</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e] dark:text-white" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
-                  <option value="primary">Primary School</option>
-                  <option value="high_school">High School</option>
-                  <option value="university">University / College</option>
-                  <option value="other">Other</option>
-                </select>
-                {tempProfile.level === "other" && (
-                  <input type="text" placeholder="Rather not say" value={customLevel} onChange={(e) => setCustomLevel(e.target.value)} className="w-full mt-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] dark:text-white animate-in slide-in-from-top-1" />
-                )}
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Gender (for Amharic grammar)</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e] dark:text-white" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
-                  <option value="female">Female (ሴት)</option>
-                  <option value="male">Male (ወንድ)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">AI Reader Voice</label>
-                <select className="w-full mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-[#1a1a2e] dark:text-white" value={tempProfile.aiVoice || "female"} onChange={e => setTempProfile({...tempProfile, aiVoice: e.target.value as any})}>
-                  <option value="female">Female Voice</option>
-                  <option value="male">Male Voice</option>
-                </select>
-              </div>
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => userProfile && setShowProfileModal(false)}></div>
+          
+          <aside className="relative z-10 w-full max-w-[400px] h-screen bg-surface-glass backdrop-blur-xl shadow-sm border-l border-border-subtle flex flex-col animate-in slide-in-from-right duration-300">
+            <header className="flex items-center justify-between px-8 py-8 shrink-0">
+              <h1 className="text-2xl font-bold tracking-tight text-content font-headline">
+                {userProfile ? "Settings" : "Welcome"}
+              </h1>
+              {userProfile && (
+                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-surface-hover rounded-full transition-all duration-200 group border border-transparent hover:border-border-subtle">
+                  <X className="text-content-muted group-hover:text-content" size={20} />
+                </button>
+              )}
+            </header>
+
+            <div className="flex-1 overflow-y-auto px-8 space-y-8 custom-scrollbar pb-12">
+              {!userProfile && (
+                <div className="flex flex-col items-center mb-6 text-center">
+                  <div className="w-16 h-16 bg-primary-muted rounded-full flex items-center justify-center mb-4 border border-primary/30">
+                    <span className="text-2xl">🎓</span>    
+                  </div>
+                  <p className="text-content-muted text-sm leading-relaxed">Let's personalize your Yeneta learning experience.</p>
+                </div>
+              )}
+
+              <section className="space-y-5">
+                <h3 className="text-[0.6875rem] font-bold tracking-widest text-content-muted uppercase font-label">Preferences</h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-content">I am a...</label>
+                    <div className="relative">
+                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
+                        <option value="student" className="bg-surface text-content">Student</option>
+                        <option value="teacher" className="bg-surface text-content">Teacher</option>
+                        <option value="other" className="bg-surface text-content">Other</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                    </div>
+                    {tempProfile.role === "other" && (
+                      <input type="text" placeholder="Please specify..." value={customRole} onChange={(e) => setCustomRole(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-content">Education Level</label>
+                    <div className="relative">
+                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
+                        <option value="primary" className="bg-surface text-content">Primary School</option>
+                        <option value="high_school" className="bg-surface text-content">High School</option>
+                        <option value="university" className="bg-surface text-content">University / College</option>
+                        <option value="other" className="bg-surface text-content">Other</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                    </div>
+                    {tempProfile.level === "other" && (
+                      <input type="text" placeholder="Please specify..." value={customLevel} onChange={(e) => setCustomLevel(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-content">Gender <span className="text-content-muted font-normal">(Amharic grammar)</span></label>
+                    <div className="relative">
+                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
+                        <option value="female" className="bg-surface text-content">Female (ሴት)</option>
+                        <option value="male" className="bg-surface text-content">Male (ወንድ)</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-content">AI Reader Voice</label>
+                    <div className="relative">
+                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.aiVoice || "female"} onChange={e => setTempProfile({...tempProfile, aiVoice: e.target.value as any})}>
+                        <option value="female" className="bg-surface text-content">Female Voice</option>
+                        <option value="male" className="bg-surface text-content">Male Voice</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                    </div>
+                  </div>
+
+                </div>
+              </section>
+
             </div>
 
-            <button onClick={handleSaveProfile} className="w-full bg-[#1a7a4c] text-white py-4 rounded-xl font-bold hover:bg-[#135c39] transition-colors shadow-lg">
-              Start Learning →
-            </button>
-          </div>
+            <footer className="p-8 mt-auto border-t border-border-subtle shrink-0">
+              <button onClick={handleSaveProfile} className="w-full py-4 bg-primary hover:bg-primary-hover text-content-inverse rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+                {userProfile ? "Save Changes" : "Start Learning"}
+                <CheckCircle2 size={18} />
+              </button>
+            </footer>
+          </aside>
         </div>
       )}
 
       {/* MOVE TO FOLDER MODAL */}
       {moveModalState.isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in">
-            <h2 className="text-xl font-bold text-[#1a1a2e] dark:text-white mb-4">Move Chat to Folder</h2>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in" onClick={() => setMoveModalState({ isOpen: false, sessionId: null })}></div>
+          
+          <div className="relative z-10 bg-surface-glass backdrop-blur-xl rounded-2xl p-8 max-w-[420px] w-full shadow-sm border border-border-subtle animate-in zoom-in duration-300">
+            <h2 className="text-2xl font-bold text-content mb-6 tracking-tight font-headline text-center">Move Chat to Folder</h2>
             
             {foldersList.length > 0 ? (
-              <div className="space-y-2 mb-6 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+              <div className="space-y-2 mb-8 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                 {foldersList.map(f => (
                   <button 
                     key={f} 
                     onClick={() => executeMove(f)}
-                    className="w-full text-left p-3 hover:bg-green-50 dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors flex items-center gap-3"
+                    className="w-full text-left p-4 hover:bg-surface-hover rounded-xl border border-border-subtle transition-colors flex items-center gap-3 group"
                   >
-                    <FolderIcon size={18} className="text-[#f0a500]" />
-                    <span className="font-semibold text-sm text-[#1a1a2e] dark:text-gray-200">{f}</span>
+                    <FolderIcon size={18} className="text-primary group-hover:scale-110 transition-transform" />
+                    <span className="font-semibold text-sm text-content">{f}</span>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center italic border border-dashed border-gray-300 dark:border-gray-700 rounded-xl py-6 bg-gray-50 dark:bg-gray-800/50">No folders available yet.</p>
+              <p className="text-sm text-content-muted mb-8 text-center italic border border-dashed border-border-strong rounded-xl py-6 bg-surface-hover">No folders available yet.</p>
             )}
 
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-5">
-              <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2 block">Or Create New Folder</label>
+            <div className="border-t border-border-subtle pt-6">
+              <label className="text-[0.6875rem] font-bold text-content-muted uppercase tracking-widest mb-3 block font-label">Or Create New Folder</label>
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -470,12 +540,12 @@ export default function ChatPage() {
                   onChange={e => setNewFolderName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && executeCreateAndMove()}
                   placeholder="New folder name..."
-                  className="flex-1 p-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:border-[#1a7a4c] text-sm text-[#1a1a2e] dark:text-white"
+                  className="flex-1 p-3 bg-background border border-border-strong rounded-xl outline-none focus:border-primary text-sm text-content font-body placeholder-content-muted"
                 />
                 <button 
                   onClick={executeCreateAndMove}
                   disabled={!newFolderName.trim()}
-                  className="bg-[#1a7a4c] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#135c39] disabled:opacity-50 text-sm transition-colors shadow"
+                  className="bg-primary text-content-inverse px-5 py-3 rounded-xl font-bold hover:bg-primary-hover disabled:opacity-50 text-sm transition-all shadow-sm font-headline"
                 >
                   Move
                 </button>
@@ -484,7 +554,7 @@ export default function ChatPage() {
 
             <button 
               onClick={() => setMoveModalState({ isOpen: false, sessionId: null })} 
-              className="w-full mt-4 p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-sm font-bold transition-colors"
+              className="w-full mt-6 py-4 bg-surface text-content hover:bg-surface-hover rounded-xl border border-border-strong text-sm font-bold transition-colors font-headline"
             >
               Cancel
             </button>
@@ -493,20 +563,20 @@ export default function ChatPage() {
       )}
 
       {/* SMART SIDEBAR */}
-      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 relative z-40 h-full bg-[#1a1a2e] shadow-2xl md:shadow-none`}>
-        <Sidebar
-          sessions={sessionsList}
-          folders={foldersList}
-          currentSessionId={currentSessionId}
-          onSelect={handleLoadSession}
-          onNew={handleNewSession}
-          onDelete={handleDeleteSession}
-          onCreateFolder={handleCreateFolder}
-          onDeleteFolder={handleDeleteFolder}
+      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 relative z-40 h-full bg-background`}>
+        <Sidebar 
+          sessions={sessionsList} 
+          folders={foldersList} 
+          currentSessionId={currentSessionId} 
+          onSelect={handleLoadSession} 
+          onNew={handleNewSession} 
+          onDelete={handleDeleteSession} 
+          onCreateFolder={handleCreateFolder} 
+          onDeleteFolder={handleDeleteFolder} 
           onMove={(id) => {
             setMoveModalState({ isOpen: true, sessionId: id });
             setNewFolderName("");
-          }}
+          }} 
           language={language}
           isCollapsed={!isSidebarOpen}
           onOpenSettings={() => {
@@ -523,20 +593,34 @@ export default function ChatPage() {
         />
       </div>
 
-      {isSidebarOpen && <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setIsSidebarOpen(false)} />}
+      {isSidebarOpen && <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
 
       {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-white dark:bg-[#0f172a]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-background relative">
         <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <ChatWindow
+        
+        <ChatWindow 
           messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
           showUpload={showUpload} setShowUpload={setShowUpload} onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
           onRetry={(id) => handleEditMessage(id, messages[messages.findIndex((m) => m.id === id) - 1]?.content || "")}
           onEditMessage={handleEditMessage}
           onTranslate={handleTranslateMessage}
         />
-        <ChatInput onSend={handleSendMessage} onToggleUpload={() => setShowUpload(!showUpload)} language={language} isLoading={isTyping || isProcessingDoc} onStopGeneration={stopGeneration} />
+        
+        {/* INPUT CONTAINER - Upload box anchored here */}
+        <div className="relative w-full z-20">
+          {showUpload && (
+            <div className="absolute bottom-full mb-0 w-full flex justify-center px-4 left-0 right-0 z-30 pointer-events-none animate-in slide-in-from-bottom-4 duration-300">
+              {/* pointer-events-auto ensures user can click the upload box but still click the chat behind it if they miss */}
+              <div className="pointer-events-auto w-full max-w-[500px]">
+                <DocumentUpload language={language} onClose={() => setShowUpload(false)} onProcess={handleProcessDocument} isProcessing={isProcessingDoc} />
+              </div>
+            </div>
+          )}
+          <ChatInput onSend={handleSendMessage} onToggleUpload={() => setShowUpload(!showUpload)} language={language} isLoading={isTyping || isProcessingDoc} onStopGeneration={stopGeneration} />
+        </div>
       </div>
+      
     </div>
   );
 }
