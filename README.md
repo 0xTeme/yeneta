@@ -4,166 +4,150 @@
 
 🔗 **Live Demo**: [https://yeneta-sigma.vercel.app/](https://yeneta-sigma.vercel.app/)
 
+---
+
 **Yeneta** is an AI-powered, personalized bilingual study assistant built specifically to empower Ethiopian students. It bridges the gap between complex study materials and accessible learning by providing document analysis, smart summaries, interactive quizzes, and voice-assisted tutoring in both **Amharic** and **English**.
 
-Built by **CODE GE'EZ**.
+Built with ❤️ by **[CODE GE'EZ](https://github.com/0xTeme)**
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
-*   **🤖 Smart AI Chat Tutor**: Context-aware conversational AI powered by Google's Gemini 1.5 Flash, tailored to the student's education level (Primary, High School, or University).
-*   **🌍 True Bilingual Support**: Seamlessly chat, learn, and translate concepts between Amharic and English without losing academic context.
-*   **📄 Document & Image Analysis**: Upload PDFs, Word Docs (.docx), PowerPoints (.pptx), TXT files, and Images. Yeneta instantly reads the content to explain, summarize, or test you on it.
-*   **📝 Interactive Quiz Generation**: Automatically generate 5, 10, or 20-question multiple-choice quizzes directly from your uploaded study materials.
-*   **🗣️ Voice-Enabled Learning (STT & TTS)**: 
-    *   **Text-to-Speech**: Listen to AI responses in natural-sounding male or female Amharic/English voices.
-    *   **Speech-to-Text**: Ask questions using your voice via built-in browser dictation and audio recording.
-*   **🗂️ Session & Folder Management**: Automatically saves your chat history to the cloud. Organize your study sessions into custom folders.
-*   **🎨 Premium UI & Theming**: A sleek, accessible, "Apple meets ChatGPT" interface with full Dark/Light mode support and Markdown/KaTeX math rendering.
-*   **🔐 Secure Authentication**: One-click Google OAuth sign-in.
+| Feature | Description |
+|---------|-------------|
+| 🤖 **AI Chat Tutor** | Context-aware conversational AI powered by Google's Gemini 1.5 Flash, tailored to education level |
+| 🌍 **Bilingual Support** | Seamlessly chat, learn, and translate between Amharic and English |
+| 📄 **Document Analysis** | Upload PDFs, Word docs, PowerPoints, TXT files, and Images |
+| 📝 **Quiz Generation** | Auto-generate 5, 10, or 20-question quizzes from your materials |
+| 🗣️ **Voice Enabled** | Text-to-Speech & Speech-to-Text with natural Amharic/English voices |
+| 🗂️ **Cloud Sync** | Chat history and folders saved automatically |
+| 🎨 **Beautiful UI** | Dark/Light mode, Markdown & Math (KaTeX) support |
+| 🔐 **Secure Auth** | One-click Google OAuth sign-in |
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/0xTeme/yeneta.git
+cd yeneta
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local  # Edit with your keys
+
+# Initialize database
+npx prisma db push
+
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Frontend:**
-*   [Next.js 15](https://nextjs.org/) (App Router)
-*   [React 19](https://react.dev/)
-*   [Tailwind CSS v4](https://tailwindcss.com/)
-*   [Lucide React](https://lucide.dev/) (Icons)
-*   [Next-Themes](https://github.com/pacocoursey/next-themes) (Dark/Light mode)
-*   React Markdown & KaTeX (Math equation rendering)
-
-**Backend & AI:**
-*   [Google Gemini API](https://ai.google.dev/) (`@google/generative-ai`)
-*   Next.js Server Actions & API Routes
-*   `mammoth` (DOCX parsing)
-*   `msedge-tts` (Text-to-Speech synthesis)
-
-**Database & Auth:**
-*   [Prisma ORM](https://www.prisma.io/)
-*   [PostgreSQL](https://postgresql.org/) (Hosted on Neon)
-*   [NextAuth.js](https://next-auth.js.org/) (Google Provider)
+| Layer | Technologies |
+|-------|--------------|
+| **Frontend** | Next.js 15, React 19, Tailwind CSS v4, Lucide Icons |
+| **Backend** | Next.js Server Actions & API Routes, Prisma ORM |
+| **Database** | PostgreSQL (Neon) |
+| **AI** | Google Gemini API, Microsoft Edge TTS |
+| **Auth** | NextAuth.js (Google OAuth) |
 
 ---
 
-## 📂 Architecture & Folder Structure
+## 📁 Project Structure
 
-The app follows a modern Next.js App Router architecture, enforcing strict boundaries between Server and Client components.
-
-```text
+```
 yeneta/
 ├── prisma/
-│   └── schema.prisma         # Database models (User, Folder, ChatSession, Message)
-├── public/                   # Static assets, SVG icons, and creator images
+│   └── schema.prisma         # Database models
+├── public/                   # Static assets, icons
 ├── src/
-│   ├── app/                  # Next.js App Router
-│   │   ├── about/            # Public About page (Team & Features)
-│   │   ├── chat/             # Main authenticated Chat/Study interface
-│   │   ├── api/              # Backend endpoints (auth, document, quiz, tts, stt, translate)
-│   │   ├── layout.tsx        # Global layout, AuthProvider, and ThemeProvider
-│   │   └── page.tsx          # Public Landing Page
-│   ├── components/           # Reusable UI components
-│   │   ├── ChatWindow.tsx    # Message history and streaming UI
-│   │   ├── ChatInput.tsx     # Textarea, voice recording, and file staging
-│   │   ├── DocumentUpload.tsx# Drag-and-drop file processing zone
-│   │   ├── Sidebar.tsx       # Chat history and folder management
-│   │   ├── QuizCard.tsx      # Interactive MCQ quiz UI
+│   ├── app/                 # Next.js App Router
+│   │   ├── chat/            # Main chat interface
+│   │   ├── about/           # About page
+│   │   ├── api/             # API routes
+│   │   └── page.tsx         # Landing page
+│   ├── components/          # React components
+│   │   ├── ChatWindow.tsx
+│   │   ├── MessageBubble.tsx
+│   │   ├── Sidebar.tsx
 │   │   └── ...
-│   ├── lib/                  # Core utilities and business logic
-│   │   ├── actions.ts        # Prisma Server Actions (DB CRUD)
-│   │   ├── gemini.ts         # Gemini AI client initialization
-│   │   ├── prompts.ts        # System instructions and localized AI prompts
-│   │   └── speech.ts         # STT/TTS browser audio handlers
-│   └── types/                # TypeScript interfaces
+│   ├── lib/                 # Utilities
+│   │   ├── actions.ts       # DB operations
+│   │   ├── gemini.ts        # AI client
+│   │   ├── prompts.ts       # AI prompts
+│   │   └── speech.ts        # STT/TTS
+│   └── types/               # TypeScript types
 └── package.json
 ```
 
 ---
 
-## ⚙️ Installation & Setup
+## ⚙️ Environment Setup
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/0xTeme/yeneta.git
-cd yeneta
-```
-
-### 2. Install dependencies
-```bash
-npm install
-# or yarn install / pnpm install
-```
-
-### 3. Set up Environment Variables
-Create a `.env.local` file in the root directory and add the following keys:
+Create a `.env.local` file with these variables:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@your-neon-host.com/dbname?sslmode=require"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="generate-a-random-secure-string-here"
+NEXTAUTH_SECRET="your-secret-key"
 
-# Google OAuth (For User Sign-in)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
+# Google OAuth
+GOOGLE_CLIENT_ID="your-client-id"
+GOOGLE_CLIENT_SECRET="your-client-secret"
 
 # Google Gemini AI
-GOOGLE_API_KEY="your-gemini-api-key"
+GOOGLE_API_KEY="your-api-key"
 ```
-
-### 4. Initialize the Database
-Push the Prisma schema to your PostgreSQL database to create the necessary tables:
-```bash
-npx prisma db push
-```
-
-### 5. Run the Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
-## 🚀 Usage
+## 📖 Usage Guide
 
-1. **Sign In**: Navigate to the home page and click "Sign in with Google".
-2. **Personalize**: On your first visit, set your Education Level, AI Voice preference, and Gender (for accurate Amharic grammar) in the Settings modal.
-3. **Chat**: Type questions in Amharic or English. Use the **Microphone** icon to dictate your questions.
-4. **Upload Materials**: Click the **Paperclip** icon to upload a PDF, Word Doc, PowerPoint, or Image.
-5. **Process Documents**: Once uploaded, choose to:
-   *   **Explain**: Get a breakdown of the document.
-   *   **Summarize**: Get key takeaways and summaries.
-   *   **Quiz Me**: Generate a 5, 10, or 20-question interactive test.
-6. **Organize**: Use the sidebar to create folders and organize your past study sessions.
+1. **Sign In** → Click "Sign in with Google"
+2. **Set Profile** → Choose education level, AI voice, and gender
+3. **Chat** → Type or speak questions in Amharic or English
+4. **Upload** → Click 📎 to upload PDFs, docs, or images
+5. **Process** → Choose to Explain, Summarize, or Quiz
+6. **Organize** → Create folders to manage your sessions
 
 ---
 
-## ⚠️ Notes & Limitations
+## ⚠️ Limitations
 
-*   **File Size Limit**: To ensure stability on serverless hosting environments (like Vercel), document uploads are capped at **4MB**.
-*   **TTS API**: The Text-to-Speech feature currently utilizes an undocumented Microsoft Edge TTS endpoint (`msedge-tts`) to achieve high-quality Amharic voices. While effective, it requires an active internet connection and may be subject to rate limiting by Microsoft.
-*   **Browser Compatibility**: Voice recording dynamically falls back to `.mp4` on Safari/iOS and `.webm` on Chrome/Android. Speech Recognition (Dictation) relies on native browser APIs and works best on Chromium-based browsers.
+- **File Size**: Max 4MB per upload (Vercel serverless limit)
+- **TTS**: Uses Microsoft Edge TTS endpoint; requires internet
+- **Browser**: Best experience on Chromium-based browsers (Chrome, Edge)
 
 ---
 
-## 👥 The Team: CODE GE'EZ
+## 🤝 Contributing
 
-Yeneta was proudly built by **CODE GE'EZ**, a team dedicated to elevating the modern educational experience through AI.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-*   **Temesgen Melaku** — Backend / Database & AI  
-    *Focuses On:* API routes, Database architecture, Gemini integration, prompts, and file processing.  
-    [GitHub](https://github.com/0xTeme) | [LinkedIn](https://www.linkedin.com/in/temesgen-melaku-walelign)
-*   **Fiseha Mengistu** — Frontend / UI-UX  
-    *Focuses On:* Interface design, React components, styling, responsiveness, and speech features.  
-    [GitHub](https://github.com/fmet1202) | [LinkedIn](https://www.linkedin.com/in/fiseha-mengistu)
+---
+
+## 👥 Team
+
+| Member | Role | Links |
+|--------|------|-------|
+| **Temesgen Melaku** | Backend / Database & AI | [GitHub](https://github.com/0xTeme) · [LinkedIn](https://linkedin.com/in/temesgen-melaku-walelign) |
+| **Fiseha Mengistu** | Frontend / UI-UX | [GitHub](https://github.com/fmet1202) · [LinkedIn](https://linkedin.com/in/fiseha-mengistu) |
 
 ---
 
 ## 📄 License
 
-This project is proprietary. Please contact the repository owners regarding usage, modification, or distribution rights.
+Proprietary. Contact the repository owners for usage, modification, or distribution rights.
