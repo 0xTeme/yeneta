@@ -17,10 +17,15 @@ interface Props {
 
 export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOpen }: Props) {
   const[isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true),[]);
+
+  const handleToggleTheme = () => {
+    const currentTheme = resolvedTheme || "light";
+    setTheme(currentTheme === "dark" ? "light" : "dark");
+  };
 
   useEffect(() => {
     const unsubscribe = subscribeToTTS(setIsAudioPlaying);
@@ -61,14 +66,14 @@ export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOp
         <div className={`flex items-center gap-3 transition-all duration-300 md:opacity-100 ${isSidebarOpen ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
           {mounted && (
             <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={handleToggleTheme}
               className="flex items-center gap-1 p-1 rounded-full bg-surface-glass backdrop-blur-md border border-border-subtle hover:bg-surface-hover transition-all duration-200 group shrink-0 shadow-sm"
               aria-label="Toggle theme"
             >
-              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme !== 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
+              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme !== "dark" ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
                 <Sun size={14} />
               </div>
-              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
+              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme === "dark" ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
                 <Moon size={14} />
               </div>
             </button>
