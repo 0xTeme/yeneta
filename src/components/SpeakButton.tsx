@@ -26,14 +26,18 @@ export default function SpeakButton({ text, gender }: { text: string; gender: "m
     }
   };
 
+  const isPlaying = isGloballyPlaying || isThisSpecificButtonPlaying;
+
   return (
     <button
       onClick={handleToggle}
-      className={`p-1.5 transition-colors rounded-full shadow ${
-        isThisSpecificButtonPlaying ? "text-red-500 bg-red-50 border border-red-100" : "text-gray-400 hover:text-[#1a7a4c] bg-white border border-gray-100"
+      className={`p-1.5 rounded-lg shadow transition-all ${
+        isPlaying 
+          ? "bg-error-base text-content-inverse hover:bg-error-hover animate-pulse" 
+          : "text-gray-400 hover:text-[#1a7a4c] bg-white border border-gray-100 hover:bg-surface-hover"
       }`}
     >
-      {isThisSpecificButtonPlaying ? <Square size={14} fill="currentColor" /> : <Volume2 size={14} />}
+      {isPlaying ? <Square size={14} fill="currentColor" /> : <Volume2 size={14} />}
     </button>
   );
 }
