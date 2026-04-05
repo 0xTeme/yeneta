@@ -32,7 +32,7 @@ const CodeBlock = ({ match, codeString, children, className, ...props }: any) =>
   };
   return (
     <div className="relative group mt-4 mb-6">
-      <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+      <div className="absolute right-3 top-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-2">
         <span className="text-[10px] font-label font-bold text-content-inverse/80 bg-black/50 px-2 py-1 rounded uppercase tracking-widest">{match ? match[1] : "code"}</span>
         <button onClick={handleCopy} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 flex items-center gap-1">
           {copied ? <Check size={14} className="text-primary-text" /> : <Copy size={14} />}
@@ -179,7 +179,7 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
             )}
 
             {/* INLINE ACTION BAR */}
-            <div className={`flex flex-wrap items-center gap-2 mt-4 pt-3 ${isUser ? "justify-end border-t border-white/20 text-content-inverse/80" : "justify-start border-t border-border-subtle text-content-muted"} opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity`}>
+            <div className={`flex flex-wrap items-center gap-2 mt-4 pt-3 ${isUser ? "justify-end border-t border-white/20 text-content-inverse/80" : "justify-start border-t border-border-subtle text-content-muted"} opacity-100 transition-opacity`}>
               
               {/* USER ACTIONS */}
               {isUser && !isEditing && (
