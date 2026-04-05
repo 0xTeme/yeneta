@@ -9,7 +9,7 @@ export const getSystemPrompt = (language: Language, userProfile?: any): string =
 
   const genderRule = isAm 
     ? (gender === "female" 
-        ? "8. The user is FEMALE. YOU MUST use feminine Amharic pronouns (ምሳሌ፡ አንቺ، አድርገሻል፣ ጎበዝ ነሽ፣ ወዘተ)." 
+        ? "8. The user is FEMALE. YOU MUST use feminine Amharic pronouns (ምሳሌ፡ አንቺ፣ አድርገሻል፣ ጎበዝ ነሽ፣ ወዘተ)." 
         : "8. The user is MALE. YOU MUST use masculine Amharic pronouns (ምሳሌ፡ አንተ፣ አድርገሃል፣ ጎበዝ ነህ፣ ወዘተ).")
     : "8. Use polite, encouraging language.";
 
@@ -53,7 +53,8 @@ ${isAm ? "ሁልጊዜ በአማርኛ ብቻ መልስ ስጥ።" : ""}
 
 export const getDocumentPrompt = (
   language: Language,
-  action: DocumentAction
+  action: DocumentAction,
+  questionCount: number = 5
 ): string => {
   const isAm = language === "amharic";
   const lang = isAm ? "አማርኛ" : "English";
@@ -120,8 +121,8 @@ FORMAT YOUR RESPONSE AS VALID JSON ONLY (no markdown, no backticks):
 }
 
 RULES:
-- Generate exactly 5 questions
-- Mix difficulty: 2 easy, 2 medium, 1 hard
+- Generate exactly ${questionCount} questions
+- Mix difficulty levels
 - Each question must have exactly 4 options
 - The "correct" field must be just the letter (A, B, C, or D)
 - Explanations should teach why the answer is correct
