@@ -12,9 +12,10 @@ interface Props {
   language: Language;
   setLanguage: (lang: Language) => void;
   onMenuClick?: () => void;
+  isSidebarOpen?: boolean;
 }
 
-export default function Navbar({ language, setLanguage, onMenuClick }: Props) {
+export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOpen }: Props) {
   const[isAudioPlaying, setIsAudioPlaying] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -57,23 +58,25 @@ export default function Navbar({ language, setLanguage, onMenuClick }: Props) {
           </button>
         )}
 
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-1 p-1 rounded-full bg-surface-glass backdrop-blur-md border border-border-subtle hover:bg-surface-hover transition-all duration-200 group shrink-0 shadow-sm"
-            aria-label="Toggle theme"
-          >
-            <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme !== 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
-              <Sun size={14} />
-            </div>
-            <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
-              <Moon size={14} />
-            </div>
-          </button>
-        )}
+        <div className={`flex items-center gap-3 transition-all duration-300 md:opacity-100 ${isSidebarOpen ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center gap-1 p-1 rounded-full bg-surface-glass backdrop-blur-md border border-border-subtle hover:bg-surface-hover transition-all duration-200 group shrink-0 shadow-sm"
+              aria-label="Toggle theme"
+            >
+              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme !== 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
+                <Sun size={14} />
+              </div>
+              <div className={`flex items-center justify-center w-7 h-7 rounded-full transition-all duration-300 ${theme === 'dark' ? 'bg-primary text-content-inverse shadow-sm' : 'text-content-muted group-hover:text-content'}`}>
+                <Moon size={14} />
+              </div>
+            </button>
+          )}
 
-        <div className="h-9 flex items-center shrink-0">
-          <LanguageToggle language={language} setLanguage={setLanguage} />
+          <div className="h-9 flex items-center shrink-0">
+            <LanguageToggle language={language} setLanguage={setLanguage} />
+          </div>
         </div>
       </div>
     </nav>

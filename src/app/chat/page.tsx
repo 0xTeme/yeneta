@@ -593,11 +593,11 @@ export default function ChatPage() {
         />
       </div>
 
-      {isSidebarOpen && <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
+      {isSidebarOpen && <div className="fixed top-[60px] bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
 
       {/* MAIN CHAT AREA */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-background relative">
-        <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
         
         <ChatWindow 
           messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
