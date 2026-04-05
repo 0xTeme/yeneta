@@ -90,7 +90,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
                         <FolderIcon size={14} className="text-primary" /> 
                         {folderName}
                       </span>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => onNew(folderName)} className="p-1 hover:text-primary hover:bg-surface-hover rounded transition-colors" title="New chat in folder"><Plus size={14}/></button>
                         <button onClick={() => setModal({ type: 'deleteFolder', payload: folderName })} className="p-1 hover:text-error-text hover:bg-error-muted rounded transition-colors" title="Delete folder"><Trash2 size={14}/></button>
                       </div>
@@ -262,7 +262,7 @@ function SessionItem({ session, isCurrent, onSelect, onDelete, onMove }: any) {
         <MessageSquare size={20} className={`flex-shrink-0 ${isCurrent ? "text-content-inverse" : ""}`} />
         <span className="text-sm font-medium truncate font-body">{session.title || "New Chat"}</span>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button onClick={(e) => { e.stopPropagation(); onMove(session.id); }} className="p-1 hover:bg-surface rounded-lg transition-all" title="Move to Folder">
           <FolderIcon size={18} className="text-content-muted hover:text-primary" />
         </button>
