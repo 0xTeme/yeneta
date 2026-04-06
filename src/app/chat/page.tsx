@@ -597,7 +597,7 @@ export default function ChatPage() {
 
       {/* MAIN CHAT AREA */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-background relative">
-        <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
+        <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         
         <ChatWindow 
           messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}

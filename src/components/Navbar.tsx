@@ -12,10 +12,9 @@ interface Props {
   language: Language;
   setLanguage: (lang: Language) => void;
   onMenuClick?: () => void;
-  isSidebarOpen?: boolean;
 }
 
-export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOpen }: Props) {
+export default function Navbar({ language, setLanguage, onMenuClick }: Props) {
   const[isAudioPlaying, setIsAudioPlaying] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
 
@@ -63,7 +62,7 @@ export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOp
           </button>
         )}
 
-        <div className={`flex items-center gap-3 transition-all duration-300 md:opacity-100 ${isSidebarOpen ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
+        <div className="flex items-center gap-3">
           {mounted && (
             <button
               onClick={handleToggleTheme}
