@@ -79,9 +79,7 @@ export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOp
             </button>
           )}
 
-          <div className="h-9 flex items-center shrink-0">
-            <LanguageToggle language={language} setLanguage={setLanguage} />
-          </div>
+          <LanguageToggle language={language} setLanguage={setLanguage} />
         </div>
       </div>
     </nav>
