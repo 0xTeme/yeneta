@@ -65,17 +65,15 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
 
   return (
     <Fragment>
-      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-xl text-content overflow-hidden pt-[60px] md:pt-0">
+      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-xl text-content overflow-hidden">
         
-        <div className="flex flex-col p-4 shrink-0 gap-4 mt-2 md:mt-2">
-          <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center" : "flex-row items-center"}`}>
-            <button onClick={() => onNew()} title="New Chat" className={`flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-content-inverse transition-transform active:scale-95 rounded-lg font-bold text-[0.6875rem] tracking-wide shadow-sm ${isCollapsed ? "w-10 h-10 p-0" : "flex-1 h-10 px-3"}`}>
-              <Plus size={18} /> {!isCollapsed && (isAmharic ? "አዲስ ቻት" : "New Chat")}  
-            </button>
-            <button onClick={() => { setModal({ type: 'addFolder' }); setNewFolderName(''); setFolderError(''); }} title={isAmharic ? "አዲስ ፎልደር" : "New Folder"} className={`flex items-center justify-center text-content-muted hover:text-content bg-surface hover:bg-surface-hover transition-all duration-200 rounded-lg border border-border-subtle ${isCollapsed ? "w-10 h-10 p-0" : "w-10 h-10 p-0 shrink-0"}`}>
-              <FolderPlus size={18} />
-            </button>
-          </div>
+        <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center p-2" : "flex-row items-center p-4"}`}>
+          <button onClick={() => onNew()} title="New Chat" className={`flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-content-inverse transition-transform active:scale-95 rounded-lg font-bold text-[0.6875rem] tracking-wide shadow-sm ${isCollapsed ? "w-10 h-10 p-0" : "flex-1 h-10 px-3"}`}>
+            <Plus size={18} /> {!isCollapsed && (isAmharic ? "አዲስ ቻት" : "New Chat")}  
+          </button>
+          <button onClick={() => { setModal({ type: 'addFolder' }); setNewFolderName(''); setFolderError(''); }} title={isAmharic ? "አዲስ ፎልደር" : "New Folder"} className={`flex items-center justify-center text-content-muted hover:text-content bg-surface hover:bg-surface-hover transition-all duration-200 rounded-lg border border-border-subtle ${isCollapsed ? "w-10 h-10 p-0" : "w-10 h-10 p-0 shrink-0"}`}>
+            <FolderPlus size={18} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4 custom-scrollbar">
@@ -123,9 +121,9 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
           )}
         </div>
 
-        <div className="p-4 space-y-4 shrink-0 border-t border-border-subtle">
-          <div className={`flex items-center gap-3 px-3 py-3 bg-surface rounded-xl border border-border-subtle hover:bg-surface-hover transition-all duration-200 cursor-pointer group active:scale-[0.98] ${isCollapsed ? "justify-center" : ""}`} onClick={() => setModal({ type: 'account' })} title="Account Settings">
-            <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden border border-border-strong ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all">
+        <div className={`shrink-0 border-t border-border-subtle ${isCollapsed ? "p-2" : "p-4"}`}>
+          <div className={`flex items-center gap-3 bg-surface rounded-xl border border-border-subtle hover:bg-surface-hover transition-all duration-200 cursor-pointer group active:scale-[0.98] ${isCollapsed ? "justify-center p-2" : "px-3 py-3"}`} onClick={() => setModal({ type: 'account' })} title="Account Settings">
+            <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden border border-border-strong ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all">
               <img src={session?.user?.image || "https://www.gravatar.com/avatar/0?d=mp"} className="w-full h-full object-cover" alt="Profile" />
             </div>
             {!isCollapsed && (

@@ -429,11 +429,13 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-background relative font-body text-content">
+    <div className="flex flex-col h-[100dvh] overflow-hidden bg-background font-body text-content">
       
       {(showProfileModal || moveModalState.isOpen) && (
         <div className="fixed inset-0 z-[35] bg-background/70 backdrop-blur-md animate-in fade-in duration-200" />
       )}
+      
+      <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
       
       {/* USER PROFILE MODAL / SETTINGS DRAWER */}
       {showProfileModal && (
@@ -590,70 +592,78 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* SMART SIDEBAR - Floating like tiling WM on mobile */}
-      <div className={`
-        ${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0"}
-        ${isSidebarOpen ? "md:w-64" : "md:w-20"}
-        transition-transform duration-300 ease-out shrink-0 
-        h-[calc(100%-12px)] absolute md:relative 
-        z-40 left-3 top-3 md:left-0 md:top-0
-        rounded-2xl shadow-xl border border-border-subtle/50
-      `}>
-        <div className="w-full h-full bg-surface/95 backdrop-blur-xl rounded-2xl overflow-hidden">
-          <Sidebar 
-            sessions={sessionsList} 
-            folders={foldersList} 
-            currentSessionId={currentSessionId} 
-            onSelect={handleLoadSession} 
-            onNew={handleNewSession} 
-            onDelete={handleDeleteSession} 
-            onCreateFolder={handleCreateFolder} 
-            onDeleteFolder={handleDeleteFolder} 
-            onMove={(id) => {
-              setMoveModalState({ isOpen: true, sessionId: id });
-              setNewFolderName("");
-            }} 
-            language={language}
-            isCollapsed={!isSidebarOpen}
-            onOpenSettings={() => {
-              if (userProfile) {
-                setTempProfile({
-                  gender: userProfile.gender as any,
-                  aiVoice: userProfile.aiVoice as any,
-                  role: ["student", "teacher"].includes(userProfile.role) ? userProfile.role : "other",
-                  level: ["primary", "high_school", "university"].includes(userProfile.level) ? userProfile.level : "other",
-                });
-              }
-              setShowProfileModal(true);
-            }}
-          />
-        </div>
-      </div>
-
-      {isSidebarOpen && <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
-
-      {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-transparent relative pt-3 pr-3 md:p-0">
-        <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
+      <div className="flex flex-1 overflow-hidden relative">
         
-        <ChatWindow 
-          messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
-          showUpload={showUpload} setShowUpload={setShowUpload} onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
-          onRetry={(id) => handleEditMessage(id, messages[messages.findIndex((m) => m.id === id) - 1]?.content || "")}
-          onEditMessage={handleEditMessage}
-          onTranslate={handleTranslateMessage}
-        />
-        
-        {/* INPUT CONTAINER - Upload box anchored here */}
-        <div className="relative w-full z-20">
-          {showUpload && (
-            <div className="absolute bottom-full mb-0 w-full flex justify-center px-4 left-0 right-0 z-30 pointer-events-none animate-in slide-in-from-bottom-4 duration-300">
-              <div className="pointer-events-auto w-full max-w-[500px]">
-                <DocumentUpload language={language} onClose={() => setShowUpload(false)} onProcess={handleProcessDocument} isProcessing={isProcessingDoc} />
-              </div>
+        <div className={`
+          ${isSidebarOpen 
+            ? "w-[288px] translate-x-0 md:w-64 md:translate-x-0" 
+            : "w-0 -translate-x-full md:w-20 md:translate-x-0 invisible md:visible"
+          }
+          fixed md:fixed inset-y-0 left-0 right-0 md:right-auto z-40
+          top-[66px] md:top-[66px]
+          transition-all duration-300 ease-out 
+          shrink-0
+          overflow-visible
+        `}>
+          <div className={`w-full md:${isSidebarOpen ? "w-full" : "w-20"} h-full p-3`}>
+            <div className={`h-full bg-surface/95 backdrop-blur-xl shadow-xl border border-border-subtle/50 overflow-hidden rounded-2xl`}>
+              <Sidebar 
+                sessions={sessionsList} 
+                folders={foldersList} 
+                currentSessionId={currentSessionId} 
+                onSelect={handleLoadSession} 
+                onNew={handleNewSession} 
+                onDelete={handleDeleteSession} 
+                onCreateFolder={handleCreateFolder} 
+                onDeleteFolder={handleDeleteFolder} 
+                onMove={(id) => {
+                  setMoveModalState({ isOpen: true, sessionId: id });
+                  setNewFolderName("");
+                }} 
+                language={language}
+                isCollapsed={!isSidebarOpen}
+                onOpenSettings={() => {
+                  if (userProfile) {
+                    setTempProfile({
+                      gender: userProfile.gender as any,
+                      aiVoice: userProfile.aiVoice as any,
+                      role: ["student", "teacher"].includes(userProfile.role) ? userProfile.role : "other",
+                      level: ["primary", "high_school", "university"].includes(userProfile.level) ? userProfile.level : "other",
+                    });
+                  }
+                  setShowProfileModal(true);
+                }}
+              />
             </div>
-          )}
-          <ChatInput onSend={handleSendMessage} onToggleUpload={() => setShowUpload(!showUpload)} language={language} isLoading={isTyping || isProcessingDoc} onStopGeneration={stopGeneration} />
+          </div>
+        </div>
+
+        {isSidebarOpen && (
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-sm z-20 md:hidden animate-in fade-in duration-200 pointer-events-none" />
+        )}
+
+        {/* MAIN CHAT AREA */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-transparent relative">
+          <ChatWindow 
+            messages={messages} language={language} aiVoice={userProfile?.aiVoice || "female"} isTyping={isTyping && !messages.some((m) => (m as any).isStreaming)}
+            showUpload={showUpload} setShowUpload={setShowUpload} onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
+            onRetry={(id) => handleEditMessage(id, messages[messages.findIndex((m) => m.id === id) - 1]?.content || "")}
+            onEditMessage={handleEditMessage}
+            onTranslate={handleTranslateMessage}
+          />
+          
+          <div className={`relative w-full px-3 md:px-3 z-10`}>
+            <div className={`${isSidebarOpen ? "bg-background/40 backdrop-blur-sm" : ""}`}>
+              {showUpload && (
+                <div className="absolute bottom-full mb-0 w-full flex justify-center px-4 left-0 right-0 z-30 pointer-events-none animate-in slide-in-from-bottom-4 duration-300">
+                  <div className="pointer-events-auto w-full max-w-[500px]">
+                    <DocumentUpload language={language} onClose={() => setShowUpload(false)} onProcess={handleProcessDocument} isProcessing={isProcessingDoc} />
+                  </div>
+                </div>
+              )}
+              <ChatInput onSend={handleSendMessage} onToggleUpload={() => setShowUpload(!showUpload)} language={language} isLoading={isTyping || isProcessingDoc} onStopGeneration={stopGeneration} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
