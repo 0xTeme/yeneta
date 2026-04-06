@@ -27,7 +27,7 @@ const ChatWindow = memo(function ChatWindow({ messages, language, aiVoice, isTyp
   }, [messages.length, isTyping]);
 
   return (
-    <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar py-8 px-4 md:px-8 relative z-0 flex flex-col items-center">
+    <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar py-8 px-4 md:px-8 relative z-0 flex flex-col items-center gpu-accelerated overscroll-behavior-y-contain">
       {messages.length === 0 ? (
         <div className="h-full w-full max-w-3xl flex flex-col items-center justify-center py-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 rounded-3xl bg-surface flex items-center justify-center shadow-sm border border-border-subtle">

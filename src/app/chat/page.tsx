@@ -256,7 +256,7 @@ export default function ChatPage() {
       let done = false;
       let fullText = "";
       let lastUpdate = Date.now();
-      const UPDATE_INTERVAL = 50;
+      const UPDATE_INTERVAL = 100;
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -351,7 +351,7 @@ export default function ChatPage() {
       let done = false;
       let fullText = "";
       let lastUpdate = Date.now();
-      const UPDATE_INTERVAL = 50;
+      const UPDATE_INTERVAL = 100;
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();

@@ -89,6 +89,7 @@ body {
   transform: translateZ(0);
   will-change: transform, opacity;
   backface-visibility: hidden;
+  contain: layout style paint;
 }
 
 .animate-in {
