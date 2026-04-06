@@ -44,7 +44,7 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
   });
 
   return (
-    <div className="w-full mx-auto max-w-[500px] bg-surface-glass backdrop-blur-xl shadow-sm border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col gap-6 transition-transform duration-300 relative overflow-hidden">
+    <div className="w-full mx-auto max-w-[500px] bg-surface backdrop-blur-xl shadow-lg border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col gap-6 transition-transform duration-300 relative overflow-hidden">
       
       {/* Header */}
       <div className="flex justify-between items-start z-10">

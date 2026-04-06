@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare, Plus, Trash2, FolderPlus, Folder as FolderIcon, ChevronDown, ChevronRight, X, Settings, LogOut } from "lucide-react";
 import { Language } from "@/types";
 import { useSession, signOut } from "next-auth/react";
@@ -199,47 +200,50 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
             </div>
           )}
 
-          {['deleteFolder', 'deleteChat', 'signOut'].includes(modal.type) && (
-            <div className="relative z-10 w-full max-w-[420px] bg-surface-glass backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-sm animate-in zoom-in duration-300">
-              <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-full bg-error-muted border border-error-base/20 flex items-center justify-center mb-8">
-                  <div className="w-14 h-14 rounded-full bg-error-base/20 flex items-center justify-center">
-                    {modal.type === 'signOut' ? <LogOut size={28} className="text-error-text" /> : <Trash2 size={28} className="text-error-text" />}
+          {['deleteFolder', 'deleteChat', 'signOut'].includes(modal.type) && createPortal((
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setModal({ type: 'none' })} />
+              <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
+                <div className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-full bg-error-muted border border-error-base/20 flex items-center justify-center mb-8">
+                    <div className="w-14 h-14 rounded-full bg-error-base/20 flex items-center justify-center">
+                      {modal.type === 'signOut' ? <LogOut size={28} className="text-error-text" /> : <Trash2 size={28} className="text-error-text" />}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-3 mb-10">
-                  <h2 className="text-2xl font-bold text-content font-headline">
-                    {modal.type === 'signOut' ? (isAmharic ? "ውጣ" : "Sign Out") :
-                     modal.type === 'deleteFolder' ? (isAmharic ? "ፎልደሩን ሰርዝ?" : "Delete Folder?") :   
-                     (isAmharic ? "ቻቱን ሰርዝ?" : "Delete Chat?")}   
-                  </h2>
-                  <p className="text-content-muted text-[15px] leading-relaxed font-body">
-                    {modal.type === 'signOut' 
-                      ? (isAmharic ? "እርግጠኛ ነዎት መውጣት ይፈልጋሉ? ሰነዶችዎን ለማግኘት በድጋሚ መግባት ይኖርብዎታል።" : "Are you sure you want to log out of your session? You will need to sign in again to access your documents.")
-                      : modal.type === 'deleteFolder' 
-                      ? (isAmharic ? `እርግጠኛ ነዎት "${modal.payload}" ፎልደርን መሰረዝ ይፈልጋሉ? በውስጡ ያሉት ቻቶች አይጠፉም፣ ወደ "የቅርብ ጊዜ ቻቶች" ይመለሳሉ።` : `Are you sure you want to delete the "${modal.payload}" folder? The chats inside will be kept and moved to Recent.`)
-                      : (isAmharic ? "ይህን ቻት በእርግጠኝነት መሰረዝ ይፈልጋሉ? ይህ ድርጊት ወደ ኋላ አይመለስም፣ በውስጡ ያሉት መረጃዎች በሙሉ ይጠፋሉ።" : "This action cannot be undone. All messages in this conversation will be permanently removed.")}
-                  </p>
-                </div>
+                  
+                  <div className="space-y-3 mb-10">
+                    <h2 className="text-2xl font-bold text-content font-headline">
+                      {modal.type === 'signOut' ? (isAmharic ? "ውጣ" : "Sign Out") :
+                       modal.type === 'deleteFolder' ? (isAmharic ? "ፎልደሩን ሰርዝ?" : "Delete Folder?") :   
+                       (isAmharic ? "ቻቱን ሰርዝ?" : "Delete Chat?")}   
+                    </h2>
+                    <p className="text-content-muted text-[15px] leading-relaxed font-body">
+                      {modal.type === 'signOut' 
+                        ? (isAmharic ? "እርግጠኛ ነዎት መውጣት ይፈልጋሉ? ሰነዶችዎን ለማግኘት በድጋሚ መግባት ይኖርብዎታል።" : "Are you sure you want to log out of your session? You will need to sign in again to access your documents.")
+                        : modal.type === 'deleteFolder' 
+                        ? (isAmharic ? `እርግጠኛ ነዎት "${modal.payload}" ፎልደርን መሰረዝ ይፈልጋሉ? በውስጡ ያሉት ቻቶች አይጠፉም፣ ወደ "የቅርብ ጊዜ ቻቶች" ይመለሳሉ።` : `Are you sure you want to delete the "${modal.payload}" folder? The chats inside will be kept and moved to Recent.`)
+                        : (isAmharic ? "ይህን ቻት በእርግጠኝነት መሰረዝ ይፈልጋሉ? ይህ ድርጊት ወደ ኋላ አይመለስም፣ በውስጡ ያሉት መረጃዎች በሙሉ ይጠፋሉ።" : "This action cannot be undone. All messages in this conversation will be permanently removed.")}
+                    </p>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-4 w-full">
-                  <button onClick={() => setModal({ type: 'none' })} className="py-4 px-6 bg-surface hover:bg-surface-hover text-content rounded-xl text-sm font-bold transition-all border border-border-strong font-headline">
-                    Cancel
-                  </button>
-                  <button onClick={() => {
-                      if (modal.type === 'signOut') { localStorage.clear(); signOut(); }
-                      else if (modal.type === 'deleteFolder') { onDeleteFolder(modal.payload!); setModal({type: 'none'}); }
-                      else if (modal.type === 'deleteChat') { onDelete(modal.payload!); setModal({type: 'none'}); }
-                    }} 
-                    className="py-4 px-6 bg-error-muted text-error-text hover:bg-error-base hover:text-content-inverse dark:bg-error-base dark:text-content-inverse dark:hover:bg-error-hover rounded-xl text-sm font-bold shadow-sm transition-all font-headline"
-                  >
-                    {modal.type === 'signOut' ? (isAmharic ? "ውጣ" : "Sign Out") : (isAmharic ? "ሰርዝ" : "Delete")}   
-                  </button>
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <button onClick={() => setModal({ type: 'none' })} className="py-4 px-6 bg-surface hover:bg-surface-hover text-content rounded-xl text-sm font-bold transition-all border border-border-strong font-headline">
+                      Cancel
+                    </button>
+                    <button onClick={() => {
+                        if (modal.type === 'signOut') { localStorage.clear(); signOut(); }
+                        else if (modal.type === 'deleteFolder') { onDeleteFolder(modal.payload!); setModal({type: 'none'}); }
+                        else if (modal.type === 'deleteChat') { onDelete(modal.payload!); setModal({type: 'none'}); }
+                      }} 
+                      className="py-4 px-6 bg-error-muted text-error-text hover:bg-error-base hover:text-content-inverse dark:bg-error-base dark:text-content-inverse dark:hover:bg-error-hover rounded-xl text-sm font-bold shadow-sm transition-all font-headline"
+                    >
+                      {modal.type === 'signOut' ? (isAmharic ? "ውጣ" : "Sign Out") : (isAmharic ? "ሰርዝ" : "Delete")}   
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
+          ), document.body)}
 
         </div>
       )}
