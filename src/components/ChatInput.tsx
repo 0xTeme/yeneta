@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Mic, Square, Paperclip, X, FileText, Loader2, AlertCircle } from "lucide-react";
 import { Language } from "@/types";
 import { startRecordingAudio } from "@/lib/speech";
@@ -39,7 +39,7 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
     }
   }, [text]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if ((text.trim() || stagedFile) && !isLoading && !isTranscribing) {
       if (text.trim()) setMessageHistory((prev) => [text.trim(), ...prev]);
       setHistoryIndex(-1);
@@ -48,9 +48,9 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
       setStagedFile(null);
       setSpeechError("");
     }
-  };
+  }, [text, stagedFile, isLoading, isTranscribing, onSend]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { 
       e.preventDefault(); 
       handleSend(); 
@@ -66,9 +66,9 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex); setText(messageHistory[newIndex]);
     }
-  };
+  }, [messageHistory, historyIndex, handleSend]);
 
-  const toggleMic = async () => {
+  const toggleMic = useCallback(async () => {
     if (isTranscribing) return;
     setSpeechError("");
 
@@ -90,7 +90,7 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
       },
       () => setIsRecording(true)
     );
-  };
+  }, [isTranscribing, isRecording]);
 
   return (
     <div className="w-full flex flex-col items-center p-4 sm:p-6 sm:pb-8 bg-gradient-to-t from-background via-background/90 to-transparent sticky bottom-0 z-20 gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Quiz, Language } from "@/types";
 import { Check, X, ArrowRight, RefreshCw, Verified, XCircle } from "lucide-react";
 
@@ -9,7 +9,7 @@ interface Props {
   language: Language;
 }
 
-export default function QuizCard({ quiz, language }: Props) {
+const QuizCard = memo(function QuizCard({ quiz, language }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -187,4 +187,6 @@ export default function QuizCard({ quiz, language }: Props) {
       </div>
     </div>
   );
-}
+});
+
+export default QuizCard;

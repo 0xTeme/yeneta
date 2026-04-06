@@ -81,6 +81,19 @@ body {
   font-family: 'Noto Sans Ethiopic', sans-serif;
   background-color: var(--bg-base);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.animate-in {
+  transform: translateZ(0);
+  will-change: opacity, transform;
 }
 
 ::-webkit-scrollbar {

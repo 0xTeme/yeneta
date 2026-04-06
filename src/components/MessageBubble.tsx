@@ -18,7 +18,7 @@ import "highlight.js/styles/github-dark.css";
 import SpeakButton from "./SpeakButton";
 import QuizCard from "./QuizCard";
 import { FileText, Image as ImageIcon, Copy, Check, Edit2, Download, RefreshCw, Languages, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 
 hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("js", javascript);
@@ -48,7 +48,7 @@ interface Props {
   onTranslate?: (id: string, text: string) => void;
 }
 
-const CodeBlock = ({ match, codeString, children, className, ...props }: any) => {
+const CodeBlock = memo(({ match, children, className, ...props }: any) => {
   const [copied, setCopied] = useState(false);
   const [highlighted, setHighlighted] = useState("");
   const lang = match ? match[1] : "";
@@ -68,11 +68,11 @@ const CodeBlock = ({ match, codeString, children, className, ...props }: any) =>
     }
   }, [children, lang]);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(String(children).replace(/\n$/, ""));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [children]);
 
   return (
     <div className="relative group mt-4 mb-6">
@@ -91,16 +91,16 @@ const CodeBlock = ({ match, codeString, children, className, ...props }: any) =>
       </pre>
     </div>
   );
-};
+});
 
-export default function MessageBubble({ message, language, aiVoice, onEdit, onRetry, onTranslate }: Props) {
+const MessageBubble = memo(function MessageBubble({ message, language, aiVoice, onEdit, onRetry, onTranslate }: Props) {
   const isUser = message.role === "user";
   const [copiedText, setCopiedText] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  const handleTranslate = async () => {
+  const handleTranslate = useCallback(async () => {
     if (!onTranslate || !message.content) return;
     setIsTranslating(true);
     try {
@@ -108,7 +108,7 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
     } finally {
       setIsTranslating(false);
     }
-  };
+  }, [onTranslate, message.id, message.content]);
 
   if (message.type === "quiz") {
     let quizData;
@@ -116,13 +116,13 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
     return <div className="flex w-full justify-start my-4"><QuizCard quiz={quizData} language={language} /></div>;
   }
 
-  const handleCopyText = () => {
+  const handleCopyText = useCallback(() => {
     navigator.clipboard.writeText(message.content);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2000);
-  };
+  }, [message.content]);
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = useCallback(() => {
     const printWindow = window.open('', '', 'height=800,width=800');
     if (printWindow) {
       printWindow.document.write('<html><head><title>Yeneta AI Response</title>');
@@ -145,14 +145,14 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
         printWindow.close();
       }, 250);
     }
-  };
+  }, [message.content]);
 
-  const submitEdit = () => {
+  const submitEdit = useCallback(() => {
     if (onEdit && editText.trim() !== message.content) {
       onEdit(message.id, editText.trim());
     }
     setIsEditing(false);
-  };
+  }, [onEdit, message.id, message.content, editText]);
 
   return (
     <div className={`flex flex-col ${isUser ? "items-end" : "items-start"} space-y-2 w-full my-4 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
@@ -271,4 +271,6 @@ export default function MessageBubble({ message, language, aiVoice, onEdit, onRe
       </div>
     </div>
   );
-}
+});
+
+export default MessageBubble;

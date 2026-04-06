@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { Message, Language, DocumentAction } from "@/types";
 import MessageBubble from "./MessageBubble";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -19,12 +19,12 @@ interface Props {
   onTranslate?: (messageId: string, text: string) => void;
 }
 
-export default function ChatWindow({ messages, language, aiVoice, isTyping, showUpload, setShowUpload, onProcessDocument, isUploading, onRetry, onEditMessage, onTranslate }: Props) {
+const ChatWindow = memo(function ChatWindow({ messages, language, aiVoice, isTyping, showUpload, setShowUpload, onProcessDocument, isUploading, onRetry, onEditMessage, onTranslate }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping, showUpload]);
+    bottomRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
+  }, [messages.length, isTyping]);
 
   return (
     <div className="flex-1 overflow-y-auto scroll-smooth custom-scrollbar py-8 px-4 md:px-8 relative z-0 flex flex-col items-center">
@@ -90,4 +90,6 @@ export default function ChatWindow({ messages, language, aiVoice, isTyping, show
       )}
     </div>
   );
-}
+});
+
+export default ChatWindow;
