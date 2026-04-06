@@ -31,7 +31,7 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxSize: 4 * 1024 * 1024, // CRITICAL FIX: Lowered to 4MB to prevent Vercel 4.5MB payload limit hard crashes.
+    maxSize: 10 * 1024 * 1024,
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
@@ -106,7 +106,7 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
                   {isAmharic ? "ፋይሉን እዚህ ይጎትቱ ወይም ይጫኑ" : "Drop file here or click to browse"}
                 </p>
                 <p className="text-content-muted text-[0.6875rem] font-bold font-label uppercase tracking-widest mt-2">
-                  PDF, DOCX, PPTX, TXT, JPG, PNG (Max 4MB)
+                  PDF, DOCX, PPTX, TXT, JPG, PNG (Max 10MB)
                 </p>
               </div>
             </>
