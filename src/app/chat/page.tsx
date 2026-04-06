@@ -563,7 +563,7 @@ export default function ChatPage() {
       )}
 
       {/* SMART SIDEBAR */}
-      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 relative z-40 h-full bg-background`}>
+      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 relative z-40 h-full bg-background ${!isSidebarOpen ? 'md:relative' : 'absolute md:relative'} left-0 top-0`}>
         <Sidebar 
           sessions={sessionsList} 
           folders={foldersList} 
