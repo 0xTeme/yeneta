@@ -65,7 +65,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
 
   return (
     <Fragment>
-      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-xl text-content overflow-hidden rounded-2xl md:rounded-none shadow-lg border border-border-subtle/50 pt-[60px] md:pt-0">
+      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-xl text-content overflow-hidden pt-[60px] md:pt-0">
         
         <div className="flex flex-col p-4 shrink-0 gap-4 mt-2 md:mt-2">
           <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center" : "flex-row items-center"}`}>
