@@ -431,6 +431,11 @@ export default function ChatPage() {
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-background relative font-body text-content">
       
+      {/* GLOBAL BACKDROP BLUR - Blurs everything including Navbar when modals are open */}
+      {(showProfileModal || moveModalState.isOpen) && (
+        <div className="fixed inset-0 z-[55] bg-background/60 backdrop-blur-md animate-in fade-in duration-200" />
+      )}
+      
       {/* USER PROFILE MODAL / SETTINGS DRAWER */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 flex justify-end">

@@ -171,7 +171,7 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
               </button>
             ) : (
               <button onClick={handleSend} disabled={(!text.trim() && !stagedFile) || isTranscribing} className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-content-inverse hover:brightness-110 shadow-sm disabled:opacity-50 disabled:hover:brightness-100 transition-all active:scale-95">
-                <Send size={18} className={text.trim() || stagedFile ? "translate-x-0.5 -translate-y-0.5 transition-transform" : ""} />
+                <Send size={18} />
               </button>
             )}
           </div>
