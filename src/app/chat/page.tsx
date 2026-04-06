@@ -31,7 +31,7 @@ export default function ChatPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -431,9 +431,8 @@ export default function ChatPage() {
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-background relative font-body text-content">
       
-      {/* GLOBAL BACKDROP BLUR - Blurs everything including Navbar when modals are open */}
       {(showProfileModal || moveModalState.isOpen) && (
-        <div className="fixed inset-0 z-[55] bg-background/60 backdrop-blur-md animate-in fade-in duration-200" />
+        <div className="fixed inset-0 z-[35] bg-background/70 backdrop-blur-md animate-in fade-in duration-200" />
       )}
       
       {/* USER PROFILE MODAL / SETTINGS DRAWER */}
@@ -592,7 +591,7 @@ export default function ChatPage() {
       )}
 
       {/* SMART SIDEBAR */}
-      <div className={`${isSidebarOpen ? "w-64" : "w-0 md:w-20"} transition-[width] duration-300 ease-in-out shrink-0 h-full bg-background absolute md:relative z-40 left-0 top-0`}>
+      <div className={`${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 md:translate-x-0 md:w-20"} transition-transform duration-300 ease-out shrink-0 h-full bg-background absolute md:relative z-40 left-0 top-0`}>
         <Sidebar 
           sessions={sessionsList} 
           folders={foldersList} 
