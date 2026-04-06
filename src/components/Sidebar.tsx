@@ -141,12 +141,12 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
         </div>
       </div>
 
-      {modal.type !== 'none' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+      {modal.type !== 'none' && createPortal((
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in" onClick={() => setModal({ type: 'none' })}></div>
           
           {['addFolder', 'account'].includes(modal.type) && (
-            <div className="relative z-10 w-full max-w-[420px] bg-surface-glass backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-sm animate-in zoom-in duration-300">
+            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
               
               {modal.type === 'addFolder' && (
                 <>
@@ -199,8 +199,10 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
               )}
             </div>
           )}
+        </div>
+      ), document.body)}
 
-          {['deleteFolder', 'deleteChat', 'signOut'].includes(modal.type) && createPortal((
+      {['deleteFolder', 'deleteChat', 'signOut'].includes(modal.type) && createPortal((
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
               <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setModal({ type: 'none' })} />
               <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
@@ -244,9 +246,6 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
               </div>
             </div>
           ), document.body)}
-
-        </div>
-      )}
     </Fragment>
   );
 }
