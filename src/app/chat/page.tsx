@@ -437,10 +437,10 @@ export default function ChatPage() {
       
       {/* USER PROFILE MODAL / SETTINGS DRAWER */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => userProfile && setShowProfileModal(false)}></div>
           
-          <aside className="relative z-10 w-full max-w-[400px] h-full bg-surface-glass backdrop-blur-xl shadow-sm border-l border-border-subtle flex flex-col animate-in slide-in-from-right duration-300">
+          <aside className="relative w-full max-w-[400px] h-full bg-surface-glass backdrop-blur-xl shadow-sm border-l border-border-subtle flex flex-col animate-in slide-in-from-right duration-300">
             <header className="flex items-center justify-between px-8 py-8 shrink-0">
               <h1 className="text-2xl font-bold tracking-tight text-content font-headline">
                 {userProfile ? "Settings" : "Welcome"}
@@ -539,7 +539,7 @@ export default function ChatPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in" onClick={() => setMoveModalState({ isOpen: false, sessionId: null })}></div>
           
-          <div className="relative z-10 bg-surface-glass backdrop-blur-xl rounded-2xl p-8 max-w-[420px] w-full shadow-sm border border-border-subtle animate-in zoom-in duration-300">
+          <div className="relative bg-surface-glass backdrop-blur-xl rounded-2xl p-8 max-w-[420px] w-full shadow-sm border border-border-subtle animate-in zoom-in duration-300">
             <h2 className="text-2xl font-bold text-content mb-6 tracking-tight font-headline text-center">Move Chat to Folder</h2>
             
             {foldersList.length > 0 ? (
