@@ -32,7 +32,7 @@ export default function Navbar({ language, setLanguage, onMenuClick, isSidebarOp
   },[]);
 
   return (
-    <nav className="flex justify-between items-center px-4 md:px-6 w-full sticky top-0 z-40 bg-surface border-b border-border-subtle h-[60px] shadow-sm">
+    <nav className="flex justify-between items-center px-4 md:px-6 w-full sticky top-3 mx-3 z-40 bg-surface/95 backdrop-blur-xl rounded-2xl h-[54px] shadow-lg border border-border-subtle/50">
       
       <div className="flex items-center gap-3 min-w-0">
         {onMenuClick && (

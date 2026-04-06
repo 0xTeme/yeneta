@@ -591,7 +591,7 @@ export default function ChatPage() {
       )}
 
       {/* SMART SIDEBAR */}
-      <div className={`${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 md:translate-x-0 md:w-20"} transition-transform duration-300 ease-out shrink-0 h-full bg-background absolute md:relative z-40 left-0 top-0`}>
+      <div className={`${isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 md:translate-x-0 md:w-20"} transition-transform duration-300 ease-out shrink-0 h-[calc(100%-12px)] bg-transparent absolute md:relative z-40 left-3 top-3 md:left-0 md:top-0`}>
         <Sidebar 
           sessions={sessionsList} 
           folders={foldersList} 
@@ -621,10 +621,10 @@ export default function ChatPage() {
         />
       </div>
 
-      {isSidebarOpen && <div className="fixed top-[60px] bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
+      {isSidebarOpen && <div className="fixed top-0 bottom-0 left-0 right-0 bg-background/60 backdrop-blur-sm z-30 md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />}
 
       {/* MAIN CHAT AREA */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-background relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-transparent relative">
         <Navbar language={language} setLanguage={setLanguage} onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} isSidebarOpen={isSidebarOpen} />
         
         <ChatWindow 
