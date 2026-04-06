@@ -64,10 +64,10 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
 
   return (
     <Fragment>
-      <div className="flex flex-col justify-between w-full h-full bg-surface-glass backdrop-blur-xl text-content overflow-hidden outline outline-1 outline-border-subtle md:border-r md:border-border-subtle md:outline-none">
+      <div className="flex flex-col justify-between w-full h-full bg-surface-glass backdrop-blur-xl text-content overflow-hidden outline outline-1 outline-border-subtle md:border-r md:border-border-subtle md:outline-none pt-[60px] md:pt-0">
         
-        <div className="flex flex-col p-4 shrink-0 gap-4 mt-2">
-          <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center pt-2" : "flex-row items-center"}`}>
+        <div className="flex flex-col p-4 shrink-0 gap-4 mt-2 md:mt-2">
+          <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center" : "flex-row items-center"}`}>
             <button onClick={() => onNew()} title="New Chat" className={`flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-content-inverse transition-transform active:scale-95 rounded-lg font-bold text-[0.6875rem] tracking-wide shadow-sm ${isCollapsed ? "w-10 h-10 p-0" : "flex-1 h-10 px-3"}`}>
               <Plus size={18} /> {!isCollapsed && (isAmharic ? "አዲስ ቻት" : "New Chat")}  
             </button>
