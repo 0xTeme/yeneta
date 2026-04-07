@@ -37,6 +37,12 @@ export default function PublicNavbar() {
           Home
         </Link>
         <Link 
+          href="/pricing" 
+          className={`text-sm font-semibold transition-colors hidden md:block ${pathname === '/pricing' ? 'text-primary' : 'text-content-muted hover:text-content'}`}
+        >
+          Pricing
+        </Link>
+        <Link 
           href="/about" 
           className={`text-sm font-semibold transition-colors hidden md:block ${pathname === '/about' ? 'text-primary' : 'text-content-muted hover:text-content'}`}
         >
