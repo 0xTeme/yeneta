@@ -2,18 +2,19 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, X, FileText, Loader2, BookOpen, List, GraduationCap, AlertCircle } from "lucide-react";
+import { UploadCloud, X, FileText, Loader2, BookOpen, List, GraduationCap, AlertCircle, Sparkles } from "lucide-react";
 import { Language, DocumentAction } from "@/types";
 
 interface Props {
   language: Language;
   onClose: () => void;
-  onProcess: (file: File, action: DocumentAction, questionCount?: number) => void;
+  onProcess: (file: File | null, action: DocumentAction, questionCount?: number, instruction?: string) => void;
   isProcessing: boolean;
 }
 
 export default function DocumentUpload({ language, onClose, onProcess, isProcessing }: Props) {
   const [file, setFile] = useState<File | null>(null);
+  const [instruction, setInstruction] = useState("");
   const [uploadError, setUploadError] = useState<string>("");
   const [showQuizMenu, setShowQuizMenu] = useState(false);
   const isAmharic = language === "amharic";
@@ -21,12 +22,10 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
     setUploadError("");
     if (fileRejections.length > 0) {
-      setUploadError(isAmharic ? "ያልተደገፈ ፋይል አይነት ወይም መጠኑ በጣም ትልቅ ነው።" : "Unsupported file format or file too large.");                
+      setUploadError(isAmharic ? "ያልተደገፈ ፋይል አይነት ነው።" : "Unsupported file format.");                
       return;
     }
-    if (acceptedFiles.length > 0) {
-      setFile(acceptedFiles[0]);
-    }
+    if (acceptedFiles.length > 0) setFile(acceptedFiles[0]);
   }, [isAmharic]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -209,6 +208,28 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4 border-t border-border-subtle">
+                <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-content-muted font-label">
+                  {isAmharic ? "ወይም የራስዎን ትዕዛዝ ያስገቡ" : "Or Custom Instruction"}
+                </label>
+                <div className="flex gap-2">
+                  <textarea
+                    value={instruction}
+                    onChange={e => setInstruction(e.target.value)}
+                    placeholder={isAmharic ? "ለምሳሌ: ዋና ዋና ነጥቦችን አውጣ..." : "e.g. Translate the summary..."}
+                    className="flex-1 bg-background border border-border-strong rounded-xl p-3 text-sm text-content focus:border-primary outline-none resize-none h-12 min-h-[48px]"
+                    disabled={isProcessing}
+                  />
+                  <button
+                    onClick={() => onProcess(file, "custom", undefined, instruction)}
+                    disabled={isProcessing || !instruction.trim()}
+                    className="h-[48px] px-5 bg-primary hover:bg-primary-hover text-content-inverse rounded-xl text-sm font-bold transition-all flex items-center justify-center shadow-sm disabled:opacity-50"
+                  >
+                    {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                  </button>
                 </div>
               </div>
             </div>
