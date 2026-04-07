@@ -33,11 +33,12 @@ export interface UserProfileData {
   aiVoice: "male" | "female";
   role: string;
   level: string;
+  onboardingCompleted?: boolean;
 }
 
 export type Language = "amharic" | "english";
 export type VoiceGender = "female" | "male";
-export type DocumentAction = "explain" | "summarize" | "quiz";
+export type DocumentAction = "explain" | "summarize" | "quiz" | "custom";
 
 export interface ChatSession {
   id: string;
