@@ -222,59 +222,6 @@ export default function ChatPage() {
     if (abortControllerRef.current) { abortControllerRef.current.abort(); setIsTyping(false); }
   };
 
-  const handleTranslateMessage = async (id: string, text: string) => {
-    const targetLanguage = /[ሀ-፿]/.test(text) ? "english" : "amharic";
-    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: "", isStreaming: true } : m));
-    
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
-
-    try {
-      const res = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, targetLanguage }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        if (errorText === "Translation failed") {
-          throw new Error("Translation failed - Gemini API error");
-        }
-        throw new Error(`Server error: ${res.status}`);
-      }
-
-      if (!res.body) throw new Error("No stream returned");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let done = false;
-      let fullText = "";
-      let lastUpdate = Date.now();
-      const UPDATE_INTERVAL = 100;
-
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        fullText += decoder.decode(value || new Uint8Array(), { stream: !doneReading });
-        
-        const now = Date.now();
-        if (now - lastUpdate >= UPDATE_INTERVAL || done) {
-          lastUpdate = now;
-          setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: fullText } : m));
-        }
-      }
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        console.error("Translation error:", error);
-        setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: "Translation failed. Please try again." } : m));
-      }
-    } finally {
-      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, isStreaming: false } : m));
-    }
-  };
-
   const handleEditMessage = (messageId: string, newText: string) => {
     const index = messages.findIndex((m) => m.id === messageId);
     if (index === -1) return;
@@ -370,40 +317,36 @@ export default function ChatPage() {
     }
   };
 
-  const handleProcessDocument = async (file: File, action: DocumentAction, questionCount?: number) => {
+  const handleProcessDocument = async (file: File | null, action: DocumentAction, questionCount?: number, instruction?: string) => {
     setIsProcessingDoc(true);
     setShowUpload(false);
 
-    const isImage = file.type.startsWith("image/");
-    const endpoint = isImage ? "/api/upload" : "/api/document";
-    
-    setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", content: "Process Document", timestamp: Date.now(), type: isImage ? "image" : "document", fileName: file.name }]);
+    let displayAction = instruction || "Process Document";
+    if (!instruction && action === "summarize") displayAction = "Summarize Document";
+    if (!instruction && action === "quiz") displayAction = `Generate ${questionCount} Question Quiz`;
+
+    const docName = file ? file.name : "Saved Document Memory";
+    const msgType = action === "quiz" ? "quiz" : "document";
+
+    setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", content: displayAction, timestamp: Date.now(), type: msgType, fileName: docName }]);
     setIsTyping(true);
 
     try {
       const formData = new FormData();
-      formData.append(isImage ? "image" : "document", file);
+      if (file) formData.append("document", file);
       formData.append("language", language);
-      if (!isImage) formData.append("action", action);
-      if (!isImage && action === "quiz" && questionCount) formData.append("questionCount", questionCount.toString());
+      formData.append("action", action);
+      if (instruction) formData.append("instruction", instruction);
+      if (questionCount) formData.append("questionCount", questionCount.toString());
 
-      const res = await fetch(endpoint, { method: "POST", body: formData });
+      const res = await fetch("/api/document", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Document analysis failed.");
       
-      // CRITICAL FIX: Safe JSON parsing fallback for Vercel 413 Payload Too Large
-      if (!res.ok) {
-        throw new Error("Server rejected the file. It may be too large or invalid.");
-      }
-
       const data: ApiResponse = await res.json();
-      
-      if (action === "quiz" && data.quiz) {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: JSON.stringify(data.quiz), timestamp: Date.now(), type: "quiz" }]);
-      } else {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: data.explanation || data.response || "Done.", timestamp: Date.now(), type: "text" }]);
-      }
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: data.response || "{}", timestamp: Date.now(), type: msgType }]);
 
     } catch (error: any) {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: error.message || "Failed to process the file.", timestamp: Date.now(), type: "text" }]);
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: `{"english":"${error.message}","amharic":"ስህተት ተከስቷል"}` , timestamp: Date.now(), type: "text" }]);
     } finally {
       setIsProcessingDoc(false);
       setIsTyping(false);
@@ -646,7 +589,6 @@ export default function ChatPage() {
             showUpload={showUpload} setShowUpload={setShowUpload} onProcessDocument={handleProcessDocument} isUploading={isProcessingDoc}
             onRetry={(id) => handleEditMessage(id, messages[messages.findIndex((m) => m.id === id) - 1]?.content || "")}
             onEditMessage={handleEditMessage}
-            onTranslate={handleTranslateMessage}
           />
           
           <div className={`relative w-full px-3 md:px-3 z-10`}>
