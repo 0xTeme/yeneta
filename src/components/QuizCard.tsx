@@ -47,7 +47,7 @@ const QuizCard = memo(function QuizCard({ quiz, language }: Props) {
     const isPass = (score / quiz.questions.length) >= 0.5;
 
     return (
-      <div className={`w-full max-w-[600px] backdrop-blur-xl rounded-3xl p-8 shadow-sm border text-center animate-in zoom-in duration-500 ${isPass ? 'bg-surface-glass border-border-subtle' : 'bg-error-muted/30 border-error-base/50'}`}>
+      <div className={`w-full max-w-[600px] backdrop-blur-md rounded-3xl p-8 shadow-sm border text-center animate-in zoom-in duration-500 ${isPass ? 'bg-surface-glass border-border-subtle' : 'bg-error-muted/30 border-error-base/50'}`}>
         <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 outline outline-1 ${isPass ? 'bg-primary-muted outline-primary/30' : 'bg-error-muted outline-error-base/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]'}`}>
           {isPass ? <Verified size={40} className="text-primary" /> : <XCircle size={40} className="text-error-base" />}
         </div>
@@ -68,7 +68,7 @@ const QuizCard = memo(function QuizCard({ quiz, language }: Props) {
   const progressPercent = (currentIndex / quiz.questions.length) * 100;
 
   return (
-    <div className="w-full max-w-[600px] bg-surface-glass backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm border border-border-subtle relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full max-w-[600px] bg-surface-glass backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-sm border border-border-subtle relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       <div className="flex flex-col gap-4 mb-8">
         <div className="flex justify-between items-end">

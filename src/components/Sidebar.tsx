@@ -65,7 +65,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
 
   return (
     <Fragment>
-      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-xl text-content overflow-hidden">
+      <div className="flex flex-col justify-between w-full h-full bg-surface/95 backdrop-blur-md text-content overflow-hidden">
         
         <div className={`flex shrink-0 gap-2 ${isCollapsed ? "flex-col items-center p-2" : "flex-row items-center p-4"}`}>
           <button onClick={() => onNew()} title="New Chat" className={`flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-content-inverse transition-transform active:scale-95 rounded-lg font-bold text-[0.6875rem] tracking-wide shadow-sm ${isCollapsed ? "w-10 h-10 p-0" : "flex-1 h-10 px-3"}`}>
@@ -144,7 +144,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in" onClick={() => setModal({ type: 'none' })}></div>
           
           {modal.type === 'addFolder' && (
-            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
+            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-md border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-content tracking-tight font-headline">{isAmharic ? "ፎልደር ፍጠር" : "Create Folder"}</h2>      
                 <button onClick={() => setModal({type: 'none'})} className="text-content-muted hover:text-content bg-surface hover:bg-surface-hover p-2 rounded-full transition-colors border border-border-subtle"><X size={18}/></button>
@@ -169,7 +169,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
           )}
 
           {modal.type === 'account' && (
-            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300 text-center">
+            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-md border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300 text-center">
               <div className="w-24 h-24 bg-background flex items-center justify-center rounded-full mx-auto mb-5 outline outline-4 outline-primary/20 shadow-sm overflow-hidden">
                 <img src={session?.user?.image || "https://www.gravatar.com/avatar/0?d=mp"} className="w-full h-full object-cover" alt="Profile" />
               </div>
@@ -194,7 +194,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
           )}
 
           {['deleteFolder', 'deleteChat', 'signOut'].includes(modal.type) && (
-            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-xl border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
+            <div className="relative z-10 w-full max-w-[420px] bg-surface backdrop-blur-md border border-border-subtle rounded-2xl p-8 shadow-lg animate-in zoom-in duration-300">
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 rounded-full bg-error-muted border border-error-base/20 flex items-center justify-center mb-8">
                   <div className="w-14 h-14 rounded-full bg-error-base/20 flex items-center justify-center">

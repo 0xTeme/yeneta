@@ -74,7 +74,7 @@ export default function LandingPage() {
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full mt-16 mb-24 text-left animate-in fade-in slide-in-from-bottom-12 duration-700 delay-700">
           
-          <div className="bg-surface-glass backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-primary/50 transition-all duration-300 hover:shadow-lg group">
+          <div className="bg-surface-glass backdrop-blur-md p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-primary/50 transition-all duration-300 hover:shadow-lg group">
             <div className="bg-primary-muted w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <FileText className="text-primary" size={28} />
             </div>
@@ -84,7 +84,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-surface-glass backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg group">
+          <div className="bg-surface-glass backdrop-blur-md p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-blue-500/50 transition-all duration-300 hover:shadow-lg group">
             <div className="bg-blue-500/10 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <BookOpen className="text-blue-500" size={28} />
             </div>
@@ -94,7 +94,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-surface-glass backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg group">
+          <div className="bg-surface-glass backdrop-blur-md p-8 rounded-3xl shadow-sm border border-border-subtle hover:border-orange-500/50 transition-all duration-300 hover:shadow-lg group">
             <div className="bg-orange-500/10 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <BrainCircuit className="text-orange-500" size={28} />
             </div>

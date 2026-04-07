@@ -98,7 +98,7 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
 
       {/* Speech Error Indicator */}
       {speechError && (
-        <div className="pointer-events-auto bg-surface-glass backdrop-blur-xl border border-error-base/30 rounded-2xl p-4 shadow-sm flex items-center gap-4 min-w-[320px] max-w-md transition-all duration-300 animate-in slide-in-from-bottom-4">
+        <div className="pointer-events-auto bg-surface-glass backdrop-blur-md border border-error-base/30 rounded-2xl p-4 shadow-sm flex items-center gap-4 min-w-[320px] max-w-md transition-all duration-300 animate-in slide-in-from-bottom-4">
           <div className="w-10 h-10 shrink-0 rounded-full bg-error-muted flex items-center justify-center text-error-text outline outline-1 outline-error-base/40">
             <AlertCircle size={20} />
           </div>
@@ -114,7 +114,7 @@ export default function ChatInput({ onSend, onToggleUpload, language, isLoading,
 
       {/* Main Glass Input Bar */}
       <div className="relative w-full max-w-3xl">
-        <div className={`w-full bg-surface-glass backdrop-blur-xl border rounded-2xl p-2 flex items-end gap-2 transition-all duration-300 ${
+        <div className={`w-full bg-surface-glass backdrop-blur-md border rounded-2xl p-2 flex items-end gap-2 transition-all duration-300 ${
           speechError 
             ? "border-error-base/50 ring-4 ring-error-base/10 shadow-sm" 
             : "border-border-strong shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary"

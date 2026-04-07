@@ -435,99 +435,101 @@ export default function ChatPage() {
       
       {/* USER PROFILE MODAL / SETTINGS DRAWER */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => userProfile && setShowProfileModal(false)}></div>
           
-          <aside className="relative z-50 w-full max-w-[400px] h-full bg-surface-glass backdrop-blur-xl shadow-sm border-l border-border-subtle flex flex-col animate-in slide-in-from-right duration-300">
-            <header className="flex items-center justify-between px-8 py-8 shrink-0">
-              <h1 className="text-2xl font-bold tracking-tight text-content font-headline">
-                {userProfile ? "Settings" : "Welcome"}
-              </h1>
-              {userProfile && (
-                <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-surface-hover rounded-full transition-all duration-200 group border border-transparent hover:border-border-subtle">
-                  <X className="text-content-muted group-hover:text-content" size={20} />
+          <aside className="relative z-50 w-full max-w-[420px] h-full p-3 flex flex-col">
+            <div className="h-full bg-surface/95 backdrop-blur-md shadow-2xl border border-border-subtle/50 rounded-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+              <header className="flex items-center justify-between px-8 py-8 shrink-0">
+                <h1 className="text-2xl font-bold tracking-tight text-content font-headline">
+                  {userProfile ? "Settings" : "Welcome"}
+                </h1>
+                {userProfile && (
+                  <button onClick={() => setShowProfileModal(false)} className="p-2 hover:bg-surface-hover rounded-full transition-all duration-200 group border border-transparent hover:border-border-subtle">
+                    <X className="text-content-muted group-hover:text-content" size={20} />
+                  </button>
+                )}
+              </header>
+
+              <div className="flex-1 overflow-y-auto px-8 space-y-8 custom-scrollbar pb-12">
+                {!userProfile && (
+                  <div className="flex flex-col items-center mb-6 text-center">
+                    <div className="w-16 h-16 bg-primary-muted rounded-full flex items-center justify-center mb-4 border border-primary/30">
+                      <span className="text-2xl">🎓</span>    
+                    </div>
+                    <p className="text-content-muted text-sm leading-relaxed">Let's personalize your Yeneta learning experience.</p>
+                  </div>
+                )}
+
+                <section className="space-y-5">
+                  <h3 className="text-[0.6875rem] font-bold tracking-widest text-content-muted uppercase font-label">Preferences</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-content">I am a...</label>
+                      <div className="relative">
+                        <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
+                          <option value="student" className="bg-surface text-content">Student</option>
+                          <option value="teacher" className="bg-surface text-content">Teacher</option>
+                          <option value="other" className="bg-surface text-content">Other</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                      </div>
+                      {tempProfile.role === "other" && (
+                        <input type="text" placeholder="Please specify..." value={customRole} onChange={(e) => setCustomRole(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-content">Education Level</label>
+                      <div className="relative">
+                        <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
+                          <option value="primary" className="bg-surface text-content">Primary School</option>
+                          <option value="high_school" className="bg-surface text-content">High School</option>
+                          <option value="university" className="bg-surface text-content">University / College</option>
+                          <option value="other" className="bg-surface text-content">Other</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                      </div>
+                      {tempProfile.level === "other" && (
+                        <input type="text" placeholder="Please specify..." value={customLevel} onChange={(e) => setCustomLevel(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-content">Gender <span className="text-content-muted font-normal">(Amharic grammar)</span></label>
+                      <div className="relative">
+                        <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
+                          <option value="female" className="bg-surface text-content">Female (ሴት)</option>
+                          <option value="male" className="bg-surface text-content">Male (ወንድ)</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-content">AI Reader Voice</label>
+                      <div className="relative">
+                        <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.aiVoice || "female"} onChange={e => setTempProfile({...tempProfile, aiVoice: e.target.value as any})}>
+                          <option value="female" className="bg-surface text-content">Female Voice</option>
+                          <option value="male" className="bg-surface text-content">Male Voice</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
+                      </div>
+                    </div>
+
+                  </div>
+                </section>
+
+              </div>
+
+              <footer className="p-8 mt-auto border-t border-border-subtle shrink-0">
+                <button onClick={handleSaveProfile} className="w-full py-4 bg-primary hover:bg-primary-hover text-content-inverse rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+                  {userProfile ? "Save Changes" : "Start Learning"}
+                  <CheckCircle2 size={18} />
                 </button>
-              )}
-            </header>
-
-            <div className="flex-1 overflow-y-auto px-8 space-y-8 custom-scrollbar pb-12">
-              {!userProfile && (
-                <div className="flex flex-col items-center mb-6 text-center">
-                  <div className="w-16 h-16 bg-primary-muted rounded-full flex items-center justify-center mb-4 border border-primary/30">
-                    <span className="text-2xl">🎓</span>    
-                  </div>
-                  <p className="text-content-muted text-sm leading-relaxed">Let's personalize your Yeneta learning experience.</p>
-                </div>
-              )}
-
-              <section className="space-y-5">
-                <h3 className="text-[0.6875rem] font-bold tracking-widest text-content-muted uppercase font-label">Preferences</h3>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-content">I am a...</label>
-                    <div className="relative">
-                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.role} onChange={e => setTempProfile({...tempProfile, role: e.target.value as any})}>
-                        <option value="student" className="bg-surface text-content">Student</option>
-                        <option value="teacher" className="bg-surface text-content">Teacher</option>
-                        <option value="other" className="bg-surface text-content">Other</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
-                    </div>
-                    {tempProfile.role === "other" && (
-                      <input type="text" placeholder="Please specify..." value={customRole} onChange={(e) => setCustomRole(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-content">Education Level</label>
-                    <div className="relative">
-                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.level} onChange={e => setTempProfile({...tempProfile, level: e.target.value as any})}>
-                        <option value="primary" className="bg-surface text-content">Primary School</option>
-                        <option value="high_school" className="bg-surface text-content">High School</option>
-                        <option value="university" className="bg-surface text-content">University / College</option>
-                        <option value="other" className="bg-surface text-content">Other</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
-                    </div>
-                    {tempProfile.level === "other" && (
-                      <input type="text" placeholder="Please specify..." value={customLevel} onChange={(e) => setCustomLevel(e.target.value)} className="w-full mt-2 bg-background border border-border-strong rounded-lg py-3 px-4 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary outline-none animate-in slide-in-from-top-1" />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-content">Gender <span className="text-content-muted font-normal">(Amharic grammar)</span></label>
-                    <div className="relative">
-                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.gender} onChange={e => setTempProfile({...tempProfile, gender: e.target.value as any})}>
-                        <option value="female" className="bg-surface text-content">Female (ሴት)</option>
-                        <option value="male" className="bg-surface text-content">Male (ወንድ)</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-content">AI Reader Voice</label>
-                    <div className="relative">
-                      <select className="appearance-none bg-background border border-border-strong rounded-lg py-3 pl-4 pr-10 text-[0.875rem] font-label text-content focus:ring-1 focus:ring-primary/40 focus:border-primary w-full cursor-pointer outline-none transition-shadow" value={tempProfile.aiVoice || "female"} onChange={e => setTempProfile({...tempProfile, aiVoice: e.target.value as any})}>
-                        <option value="female" className="bg-surface text-content">Female Voice</option>
-                        <option value="male" className="bg-surface text-content">Male Voice</option>
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted pointer-events-none" size={16} />
-                    </div>
-                  </div>
-
-                </div>
-              </section>
-
+              </footer>
             </div>
-
-            <footer className="p-8 mt-auto border-t border-border-subtle shrink-0">
-              <button onClick={handleSaveProfile} className="w-full py-4 bg-primary hover:bg-primary-hover text-content-inverse rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
-                {userProfile ? "Save Changes" : "Start Learning"}
-                <CheckCircle2 size={18} />
-              </button>
-            </footer>
           </aside>
         </div>
       )}
@@ -537,7 +539,7 @@ export default function ChatPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in" onClick={() => setMoveModalState({ isOpen: false, sessionId: null })}></div>
           
-          <div className="relative bg-surface-glass backdrop-blur-xl rounded-2xl p-8 max-w-[420px] w-full shadow-sm border border-border-subtle animate-in zoom-in duration-300">
+          <div className="relative bg-surface-glass backdrop-blur-md rounded-2xl p-8 max-w-[420px] w-full shadow-sm border border-border-subtle animate-in zoom-in duration-300">
             <h2 className="text-2xl font-bold text-content mb-6 tracking-tight font-headline text-center">Move Chat to Folder</h2>
             
             {foldersList.length > 0 ? (
@@ -591,18 +593,17 @@ export default function ChatPage() {
       <div className="flex flex-1 overflow-hidden relative">
         
         <div className={`
+          absolute md:relative z-40
+          inset-y-0 left-0
+          transition-transform md:transition-[width,transform] duration-300 ease-out
+          shrink-0 overflow-visible
           ${isSidebarOpen 
-            ? "w-[288px] translate-x-0 md:w-64 md:translate-x-0" 
-            : "w-0 -translate-x-full md:w-20 md:translate-x-0 invisible md:visible"
+            ? "translate-x-0 w-[288px] md:w-64" 
+            : "-translate-x-full w-[288px] md:w-20 md:translate-x-0 invisible md:visible"
           }
-          fixed md:fixed inset-y-0 left-0 right-0 md:right-auto z-40
-          top-[66px] md:top-[66px]
-          transition-all duration-300 ease-out 
-          shrink-0
-          overflow-visible
         `}>
           <div className={`w-full md:${isSidebarOpen ? "w-full" : "w-20"} h-full p-3`}>
-            <div className={`h-full bg-surface/95 backdrop-blur-xl shadow-xl border border-border-subtle/50 overflow-hidden rounded-2xl`}>
+            <div className={`h-full bg-surface/95 backdrop-blur-md shadow-xl border border-border-subtle/50 overflow-hidden rounded-2xl`}>
               <Sidebar 
                 sessions={sessionsList} 
                 folders={foldersList} 

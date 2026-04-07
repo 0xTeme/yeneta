@@ -44,7 +44,7 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
   });
 
   return (
-    <div className="w-full mx-auto max-w-[500px] bg-surface backdrop-blur-xl shadow-lg border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col gap-6 transition-transform duration-300 relative overflow-hidden">
+    <div className="w-full mx-auto max-w-[500px] bg-surface backdrop-blur-md shadow-lg border border-border-subtle rounded-2xl p-6 md:p-8 flex flex-col gap-6 transition-transform duration-300 relative overflow-hidden">
       
       {/* Header */}
       <div className="flex justify-between items-start z-10">
@@ -189,7 +189,7 @@ export default function DocumentUpload({ language, onClose, onProcess, isProcess
                   </button>
                   
                   {showQuizMenu && (
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-surface-glass backdrop-blur-xl border border-border-subtle rounded-xl p-3 shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 min-w-[140px]">
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-surface-glass backdrop-blur-md border border-border-subtle rounded-xl p-3 shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 duration-200 min-w-[140px]">
                       <p className="text-[0.625rem] font-bold text-content-muted uppercase tracking-widest mb-2 font-label text-center">
                         {isAmharic ? "ጥያቄዎች" : "Questions"}
                       </p>
