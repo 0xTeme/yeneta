@@ -37,32 +37,53 @@ export const speakText = async (text: string, language: "amharic" | "english", g
     .replace(/^\d+\.\s/gm, "") 
     .trim();
 
-  // Split on single newlines to break up text
-  const lines = cleanText.split(/\n/).filter(l => l.trim());
+  // Split into sentence-like chunks with markers for pause types
+  // Marker: @PAUSE for short pause (sentence end), @BREAK for longer pause (newline)
+  const allChunks: { text: string; pause: number }[] = [];
   
-  // Recombine into small chunks for quick, responsive playback
-  const chunks: string[] = [];
-  let currentChunk = "";
+  // Split on newlines first, then handle sentence endings
+  const paragraphs = cleanText.split(/\n/);
   
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+  for (let p = 0; p < paragraphs.length; p++) {
+    const para = paragraphs[p].trim();
+    if (!para) continue;
     
-    if (currentChunk.length + trimmed.length > 100 && currentChunk) {
-      chunks.push(currentChunk);
-      currentChunk = trimmed;
-    } else {
-      currentChunk += (currentChunk ? " " : "") + trimmed;
+    // Split paragraph by sentence endings: . ? ! ።
+    const sentences = para.match(/[^.?!።]+[.?!።]*/g) || [para];
+    
+    for (let s = 0; s < sentences.length; s++) {
+      const sentence = sentences[s].trim();
+      if (!sentence) continue;
+      
+      // Determine pause type after this sentence
+      const endsWithAmharicPeriod = /።$/.test(sentence);
+      const isLastInParagraph = s === sentences.length - 1;
+      const isLastParagraph = p === paragraphs.length - 1;
+      const hasNewlineAfter = !isLastParagraph && paragraphs[p + 1]?.trim();
+      
+      let pauseMs = 0;
+      if (endsWithAmharicPeriod) {
+        pauseMs = 150; // Add pause for Amharic sentence ending TTS doesn't recognize
+      } else if (hasNewlineAfter) {
+        pauseMs = 100; // Brief pause before newline
+      }
+      
+      // Combine short sentences into ~100 char chunks
+      if (allChunks.length > 0 && allChunks[allChunks.length - 1].text.length + sentence.length < 100) {
+        allChunks[allChunks.length - 1].text += " " + sentence;
+      } else if (sentence) {
+        allChunks.push({ text: sentence, pause: pauseMs });
+      }
     }
   }
-  if (currentChunk) chunks.push(currentChunk);
-  if (chunks.length === 0) chunks.push(cleanText.slice(0, 100));
+  
+  if (allChunks.length === 0) allChunks.push({ text: cleanText.slice(0, 100), pause: 0 });
 
   try {
-    for (let i = 0; i < chunks.length; i++) {
+    for (let i = 0; i < allChunks.length; i++) {
       if (token !== currentPlayToken || !isPlayingQueue) break;
 
-      const chunk = chunks[i];
+      const { text: chunk, pause } = allChunks[i];
       const abortCtrl = new AbortController();
       ttsAbortController = abortCtrl;
 
@@ -91,7 +112,10 @@ export const speakText = async (text: string, language: "amharic" | "english", g
         audio.play().catch(reject);
       });
 
-
+      // Controlled pause based on sentence type
+      if (pause > 0 && i < allChunks.length - 1 && token === currentPlayToken && isPlayingQueue) {
+        await new Promise(resolve => setTimeout(resolve, pause));
+      }
     }
   } catch (error: any) {
     if (error.name !== "AbortError") console.error("TTS error:", error);
