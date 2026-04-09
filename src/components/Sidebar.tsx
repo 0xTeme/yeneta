@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { MessageSquare, Plus, Trash2, FolderPlus, Folder as FolderIcon, ChevronDown, ChevronRight, X, Settings, LogOut, Search } from "lucide-react";
 import { Language } from "@/types";
@@ -32,6 +32,20 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
   const [modal, setModal] = useState<{ type: ModalType, payload?: string }>({ type: 'none' });
   const [newFolderName, setNewFolderName] = useState("");
   const [folderError, setFolderError] = useState("");
+  
+  // Ref to track if sidebar was previously collapsed (for auto-focus search on expand)
+  const prevCollapsedRef = useRef(isCollapsed);
+  
+  // Ref for the search input to enable auto-focus
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus search input when sidebar transitions from collapsed → expanded
+  useEffect(() => {
+    if (!isCollapsed && prevCollapsedRef.current) {
+      searchInputRef.current?.focus();
+    }
+    prevCollapsedRef.current = isCollapsed;
+  }, [isCollapsed]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,6 +131,7 @@ export default function Sidebar({ sessions, folders, currentSessionId, onSelect,
         <div className="relative w-full group">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted group-focus-within:text-primary transition-colors" />
           <input
+            ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
