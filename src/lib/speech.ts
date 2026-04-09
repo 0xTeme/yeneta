@@ -43,7 +43,7 @@ export const speakText = async (text: string, language: "amharic" | "english", g
   if (chunks.length === 0) chunks.push(cleanText.slice(0, 500));
 
   try {
-    for (let i = 0; i < allChunks.length; i++) {
+    for (let i = 0; i < chunks.length; i++) {
       if (token !== currentPlayToken || !isPlayingQueue) break;
 
       const chunk = chunks[i];
