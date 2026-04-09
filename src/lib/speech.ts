@@ -84,9 +84,9 @@ export const speakText = async (text: string, language: "amharic" | "english", g
         audio.play().catch(reject);
       });
 
-      // Small pause between chunks for natural rhythm (250ms)
+      // Brief pause between chunks for natural flow (120ms)
       if (i < chunks.length - 1 && token === currentPlayToken && isPlayingQueue) {
-        await new Promise(resolve => setTimeout(resolve, 250));
+        await new Promise(resolve => setTimeout(resolve, 120));
       }
     }
   } catch (error: any) {
