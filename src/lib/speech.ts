@@ -55,24 +55,19 @@ export const speakText = async (text: string, language: "amharic" | "english", g
       const sentence = sentences[s].trim();
       if (!sentence) continue;
       
-      // Determine pause type after this sentence
-      const endsWithAmharicPeriod = /።$/.test(sentence);
-      const endsWithEnglishPeriod = /[.?!]$/.test(sentence);
-      const isLastParagraph = p === paragraphs.length - 1;
-      const hasNewlineAfter = !isLastParagraph && paragraphs[p + 1]?.trim();
+      // Detect sentence-ending punctuation for controlled pause
+      const endsWithAmharic = /።$/.test(sentence);
+      const endsWithEnglish = /[.?!]$/.test(sentence);
+      const pauseMs = endsWithAmharic ? 150 : endsWithEnglish ? 120 : 0;
       
-      let pauseMs = 0;
-      if (endsWithAmharicPeriod) {
-        pauseMs = 150; // Add pause for Amharic sentence ending TTS doesn't recognize
-      } else if (endsWithEnglishPeriod) {
-        pauseMs = 120; // Brief pause for English sentence endings
-      }
+      // Strip punctuation - we'll handle pauses ourselves
+      const textForTTS = sentence.replace(/[.?!።]+$/, "").trim();
       
       // Combine short sentences into ~100 char chunks
-      if (allChunks.length > 0 && allChunks[allChunks.length - 1].text.length + sentence.length < 100) {
-        allChunks[allChunks.length - 1].text += " " + sentence;
-      } else if (sentence) {
-        allChunks.push({ text: sentence, pause: pauseMs });
+      if (allChunks.length > 0 && allChunks[allChunks.length - 1].text.length + textForTTS.length < 100) {
+        allChunks[allChunks.length - 1].text += " " + textForTTS;
+      } else if (textForTTS) {
+        allChunks.push({ text: textForTTS, pause: pauseMs });
       }
     }
   }
