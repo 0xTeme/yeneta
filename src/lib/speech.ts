@@ -35,21 +35,28 @@ export const speakText = async (text: string, language: "amharic" | "english", g
     .replace(/^>+/gm, "") 
     .replace(/^[-+]\s/gm, "") 
     .replace(/^\d+\.\s/gm, "") 
-    .replace(/\n+/g, " ") 
     .trim();
 
-  // Split by sentence-ending punctuation for natural pauses, but keep punctuation in chunks
-  const rawChunks = cleanText.match(/[^.?!።]+[.?!።]*/g)?.map(s => s.trim()).filter(s => s) || [cleanText];
+  // Split only on double newlines to separate paragraphs
+  const paragraphs = cleanText.split(/\n\n+/).filter(p => p.trim());
   
-  // Recombine into ~120-char chunks for balance between responsiveness and natural pauses
+  // Recombine into chunks while keeping paragraphs together
   const chunks: string[] = [];
   let currentChunk = "";
   
-  for (const phrase of rawChunks) {
-    currentChunk += (currentChunk ? " " : "") + phrase;
-    if (currentChunk.length > 120) { chunks.push(currentChunk); currentChunk = ""; }
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (!trimmed) continue;
+    
+    if (currentChunk.length + trimmed.length > 180 && currentChunk) {
+      chunks.push(currentChunk);
+      currentChunk = trimmed;
+    } else {
+      currentChunk += (currentChunk ? " " : "") + trimmed;
+    }
   }
   if (currentChunk) chunks.push(currentChunk);
+  if (chunks.length === 0) chunks.push(cleanText.slice(0, 200));
 
   try {
     for (let i = 0; i < chunks.length; i++) {
@@ -84,10 +91,7 @@ export const speakText = async (text: string, language: "amharic" | "english", g
         audio.play().catch(reject);
       });
 
-      // Brief pause between chunks for natural flow (120ms)
-      if (i < chunks.length - 1 && token === currentPlayToken && isPlayingQueue) {
-        await new Promise(resolve => setTimeout(resolve, 120));
-      }
+
     }
   } catch (error: any) {
     if (error.name !== "AbortError") console.error("TTS error:", error);
