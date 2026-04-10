@@ -127,7 +127,7 @@ GOOGLE_API_KEY="your-api-key"
 
 ## ⚠️ Limitations
 
-- **File Size**: Max 4MB per upload (Vercel serverless limit)
+- **File Size**: Max 10MB per upload
 - **TTS**: Uses Microsoft Edge TTS endpoint; requires internet
 - **Browser**: Best experience on Chromium-based browsers (Chrome, Edge)
 
