@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -11,13 +11,6 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-const safetySettings = [
-  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-];
-
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -25,42 +18,49 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { prompt, aspectRatio = "1:1" } = await req.json();
+    const { prompt } = await req.json();
 
     if (!prompt || !prompt.trim()) {
       return NextResponse.json({ error: "Prompt required" }, { status: 400 });
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-preview-image-generation",
-      generationConfig: {
-        responseModalities: ["text", "image"],
-      },
-      safetySettings,
+      model: "gemini-1.5-flash",
     });
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: `Generate an image of: ${prompt}. Only respond with the image.` }] }],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
+    });
+
     const response = result.response;
+    const candidate = response.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
 
-    const text = response.text?.();
-    const imageParts = response.candidates?.[0]?.content?.parts?.filter(
-      (part: any) => part.inlineData?.mimeType?.startsWith("image/")
-    );
+    let imageBase64 = null;
+    let mimeType = "image/png";
+    let text = "Here's an image based on your request.";
 
-    if (!imageParts || imageParts.length === 0) {
+    for (const part of parts) {
+      if (part.inlineData) {
+        imageBase64 = part.inlineData.data;
+        mimeType = part.inlineData.mimeType || "image/png";
+      } else if (part.text) {
+        text = part.text;
+      }
+    }
+
+    if (!imageBase64) {
       return NextResponse.json({ 
-        error: "No image generated",
-        text: text || "Could not generate an image for this prompt."
+        error: "Image generation is not available. Try asking for a description instead." 
       }, { status: 200 });
     }
 
-    const imageData = imageParts[0].inlineData;
-    const imageBase64 = imageData.data;
-    const mimeType = imageData.mimeType;
-
     return NextResponse.json({
       imageUrl: `data:${mimeType};base64,${imageBase64}`,
-      text: text || "Here's an image based on your request.",
+      text,
       prompt,
     });
 
@@ -70,6 +70,12 @@ export async function POST(req: NextRequest) {
     if (error.message?.includes("SAFETY") || error.message?.includes("blocked")) {
       return NextResponse.json({ 
         error: "Image could not be generated due to safety settings. Please try a different prompt." 
+      }, { status: 200 });
+    }
+
+    if (error.message?.includes("not supported") || error.message?.includes("not available")) {
+      return NextResponse.json({ 
+        error: "Image generation is not available with your current plan. Try asking for a description instead." 
       }, { status: 200 });
     }
 
