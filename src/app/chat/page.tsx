@@ -327,12 +327,18 @@ export default function ChatPage() {
         if (url && !imageUrls.includes(url)) imageUrls.push(url); 
       };
 
+      let isJsonResponse = false;
+      let parsedJson: { english?: string; amharic?: string } | null = null;
+      
       // Try to parse as JSON first (the AI returns JSON with english/amharic)
       let textContent = fullText;
       try {
         const cleanedForJson = fullText.replace(/^```json\n?/, "").replace(/```$/, "").trim();
-        const parsed = JSON.parse(cleanedForJson);
-        textContent = parsed.english || parsed.amharic || fullText;
+        parsedJson = JSON.parse(cleanedForJson);
+        if (parsedJson.english || parsedJson.amharic) {
+          isJsonResponse = true;
+          textContent = parsedJson.english || parsedJson.amharic || fullText;
+        }
       } catch {
         // Not JSON, use full text
       }
@@ -362,9 +368,18 @@ export default function ChatPage() {
           .replace(/\n{3,}/g, "\n\n")
           .trim();
         
+        let finalContent = fullText;
+        if (isJsonResponse && parsedJson) {
+          parsedJson.english = (parsedJson.english || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          finalContent = JSON.stringify(parsedJson);
+        } else {
+          finalContent = cleanContent || "Here are the images:";
+        }
+        
         setMessages((prev) => prev.map((m) => 
           m.id === assistantId 
-            ? { ...m, content: cleanContent || "Here are the images:", imageUrls }
+            ? { ...m, content: finalContent, imageUrls }
             : m
         ));
       }
