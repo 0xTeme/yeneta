@@ -33,7 +33,7 @@ export default function SpeakButton({ text, gender }: { text: string; gender: "m
       onClick={handleToggle}
       className={`p-1.5 rounded-lg shadow transition-all ${
         isPlaying 
-          ? "bg-error-base text-content-inverse hover:bg-error-hover animate-pulse" 
+          ? "bg-error-base text-white border-2 border-error-hover hover:bg-error-hover animate-pulse" 
           : "text-gray-400 hover:text-[#1a7a4c] bg-white border border-gray-100 hover:bg-surface-hover"
       }`}
     >
