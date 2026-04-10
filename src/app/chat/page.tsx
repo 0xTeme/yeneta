@@ -324,13 +324,14 @@ export default function ChatPage() {
 
       const imageUrls: string[] = [];
       const addImageUrl = (url: string) => { 
-        if (url && !imageUrls.includes(url)) imageUrls.push(url); 
+        if (url && url.length > 10 && !imageUrls.includes(url)) {
+          imageUrls.push(url); 
+        }
       };
 
       let isJsonResponse = false;
       let parsedJson: { english?: string; amharic?: string } | null = null;
       
-      // Try to parse as JSON first (the AI returns JSON with english/amharic)
       let textContent = fullText;
       try {
         const cleanedForJson = fullText.replace(/^```json\n?/, "").replace(/```$/, "").trim();
@@ -340,29 +341,30 @@ export default function ChatPage() {
           textContent = parsedJson.english || parsedJson.amharic || fullText;
         }
       } catch {
-        // Not JSON, use full text
+        textContent = fullText;
       }
       
       let match;
-      const mdImageRegex = /!\[.*?\]\((.*?)\)/g;
-      while ((match = mdImageRegex.exec(textContent)) !== null) addImageUrl(match[1]);
+      const mdImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+      while ((match = mdImageRegex.exec(textContent)) !== null) {
+        addImageUrl(match[2]);
+      }
 
-      const unsplashRegex = /https?:\/\/(?:source\.)?unsplash\.com[^\s\)\"\'<>]+/gi;
-      while ((match = unsplashRegex.exec(textContent)) !== null) addImageUrl(match[0]);
-
-      const picsumRegex = /https?:\/\/picsum\.photos[^\s\)\"\'<>]+/gi;
-      while ((match = picsumRegex.exec(textContent)) !== null) addImageUrl(match[0]);
-
-      const imgurRegex = /https?:\/\/(?:i\.)?imgur\.com[^\s\)\"\'<>]+/gi;
-      while ((match = imgurRegex.exec(textContent)) !== null) addImageUrl(match[0]);
-
-      const extRegex = /https?:\/\/[^\s\)\"\'<>]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?.*)?/gi;
-      while ((match = extRegex.exec(textContent)) !== null) addImageUrl(match[0]);
+      const anyUrlRegex = /https?:\/\/[^\s"'\)<>\\]+/gi;
+      while ((match = anyUrlRegex.exec(textContent)) !== null) {
+        const url = match[0];
+        if (url.match(/\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?|$)/i) || 
+            url.includes("unsplash.com") || 
+            url.includes("picsum.photos") ||
+            url.includes("imgur.com")) {
+          addImageUrl(url);
+        }
+      }
 
       if (imageUrls.length > 0) {
         let cleanContent = textContent
-          .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-          .replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "")
+          .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+          .replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "")
           .replace(/\\n/g, "\n")
           .replace(/\\"/g, '"')
           .replace(/\n{3,}/g, "\n\n")
@@ -370,8 +372,8 @@ export default function ChatPage() {
         
         let finalContent = fullText;
         if (isJsonResponse && parsedJson) {
-          parsedJson.english = (parsedJson.english || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
-          parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          parsedJson.english = (parsedJson.english || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
           finalContent = JSON.stringify(parsedJson);
         } else {
           finalContent = cleanContent || "Here are the images:";
