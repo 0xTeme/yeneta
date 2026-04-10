@@ -238,29 +238,30 @@ export default function ChatPage() {
     const assistantId = (Date.now() + 1).toString();
 
     if (wantsImage) {
-      // Handle image generation
-      setMessages(() => [...localHistory, userMsg, { id: assistantId, role: "assistant", content: language === "amharic" ? "ምስል እየፈጠርኩ ነው..." : "Generating image...", timestamp: Date.now(), type: "text", isStreaming: true } as Message]);
+      setMessages(() => [...localHistory, userMsg, { id: assistantId, role: "assistant", content: language === "amharic" ? "ምስል እየፈለግኩ ነው..." : "Finding images...", timestamp: Date.now(), type: "text", isStreaming: true } as Message]);
       setIsTyping(true);
 
       try {
-        const res = await fetch("/api/image", {
+        const res = await fetch("/api/image-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text }),
+          body: JSON.stringify({ query: text }),
         });
 
         const data = await res.json();
 
-        if (data.imageUrl) {
+        if (data.images && data.images.length > 0) {
           setMessages((prev) => prev.map((m) => 
             m.id === assistantId 
-              ? { ...m, content: data.text || "", imageUrls: [data.imageUrl], isStreaming: false }
+              ? { ...m, content: language === "amharic" 
+                  ? `{"english":"Here are some images related to: ${data.query}","amharic":"ይህን ጋር የተዛማው ምስል ነው: ${data.query}"}` 
+                  : `{"english":"Here are some images related to: ${data.query}","amharic":"ይህን ጋር የተዛማው ምስል ነው: ${data.query}"}`, imageUrls: data.images, isStreaming: false }
               : m
           ));
         } else {
           setMessages((prev) => prev.map((m) => 
             m.id === assistantId 
-              ? { ...m, content: data.error || (language === "amharic" ? "ምስል መፍጠር አልተቻለም።" : "Could not generate image."), isStreaming: false }
+              ? { ...m, content: language === "amharic" ? "ምስል አልተገኘም።" : "No images found.", isStreaming: false }
               : m
           ));
         }
