@@ -350,13 +350,20 @@ export default function ChatPage() {
         addImageUrl(match[2]);
       }
 
-      const anyUrlRegex = /https?:\/\/[^\s"'\)<>\\]+/gi;
-      while ((match = anyUrlRegex.exec(textContent)) !== null) {
+      const allUrlsRegex = /https:\/\/[^\s<>"')\]]+/gi;
+      while ((match = allUrlsRegex.exec(textContent)) !== null) {
         const url = match[0];
-        if (url.match(/\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?|$)/i) || 
-            url.includes("unsplash.com") || 
-            url.includes("picsum.photos") ||
-            url.includes("imgur.com")) {
+        const lowerUrl = url.toLowerCase();
+        if (lowerUrl.match(/\.(?:jpg|jpeg|png|gif|webp|svg)(\?|$)/) ||
+            lowerUrl.includes("unsplash.com") ||
+            lowerUrl.includes("picsum.photos") ||
+            lowerUrl.includes("imgur.com") ||
+            lowerUrl.includes("pexels.com") ||
+            lowerUrl.includes("pixabay.com") ||
+            lowerUrl.includes("flickr.com") ||
+            lowerUrl.includes("cloudinary.com") ||
+            lowerUrl.includes("images.google") ||
+            lowerUrl.includes("image")) {
           addImageUrl(url);
         }
       }
@@ -364,7 +371,7 @@ export default function ChatPage() {
       if (imageUrls.length > 0) {
         let cleanContent = textContent
           .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
-          .replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "")
+          .replace(/https:\/\/[^\s<>"')\]]+/gi, "")
           .replace(/\\n/g, "\n")
           .replace(/\\"/g, '"')
           .replace(/\n{3,}/g, "\n\n")
@@ -372,8 +379,8 @@ export default function ChatPage() {
         
         let finalContent = fullText;
         if (isJsonResponse && parsedJson) {
-          parsedJson.english = (parsedJson.english || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
-          parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https?:\/\/[^\s"'\)<>\\]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^"\s)*<>\\]*)?/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          parsedJson.english = (parsedJson.english || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+          parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
           finalContent = JSON.stringify(parsedJson);
         } else {
           finalContent = cleanContent || "Here are the images:";
