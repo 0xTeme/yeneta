@@ -321,6 +321,23 @@ export default function ChatPage() {
         fullText += decoder.decode(value || new Uint8Array(), { stream: !doneReading });
         setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: fullText } : m));
       }
+
+      const markdownImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
+      const imageUrls: string[] = [];
+      let match;
+      while ((match = markdownImageRegex.exec(fullText)) !== null) {
+        imageUrls.push(match[2]);
+      }
+
+      if (imageUrls.length > 0) {
+        const cleanContent = fullText.replace(/!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, "").trim();
+        
+        setMessages((prev) => prev.map((m) => 
+          m.id === assistantId 
+            ? { ...m, content: cleanContent || "Here are the images:", imageUrls }
+            : m
+        ));
+      }
     } catch (error: any) {
       if (error.name !== "AbortError") {
         setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: '{"english":"Error generating response.","amharic":"ስህተት ተከስቷል።"}' } : m));
