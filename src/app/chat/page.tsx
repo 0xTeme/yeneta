@@ -373,7 +373,25 @@ export default function ChatPage() {
       }
     } catch (error: any) {
       if (error.name !== "AbortError") {
-        setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: '{"english":"Error generating response.","amharic":"ስህተት ተከስቷል።"}' } : m));
+        const isLimitExceeded = error.message?.includes("429") || 
+                               error.message?.includes("limit_exceeded") ||
+                               error.message?.toLowerCase().includes("quota");
+        
+        if (isLimitExceeded) {
+          setMessages((prev) => prev.map((m) => m.id === assistantId 
+            ? { ...m, content: language === "amharic" 
+                ? '{"english":"Your API limit has been reached. Please try again later.","amharic":"የእርስዎ API ገደብ ደርሷል። እባክዎ ቆየት ብለው እንደገና ይሞክሩ።"}' 
+                : '{"english":"Your API limit has been reached. Please try again later.","amharic":"የእርስዎ API ገደብ ደርሷል። እባክዎ ቆየት ብለው እንደገና ይሞክሩ።"}'
+              } : m
+          ));
+        } else {
+          setMessages((prev) => prev.map((m) => m.id === assistantId 
+            ? { ...m, content: language === "amharic" 
+                ? '{"english":"Error generating response.","amharic":"ስህተት ተከስቷል።"}' 
+                : '{"english":"Error generating response.","amharic":"ስህተት ተከስቷል።"}'
+              } : m
+          ));
+        }
       }
     } finally {
       setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, isStreaming: false } : m));

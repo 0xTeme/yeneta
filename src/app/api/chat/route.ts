@@ -52,6 +52,20 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Something went wrong";
+    
+    if (errorMessage.includes("429") || 
+        errorMessage.toLowerCase().includes("quota") ||
+        errorMessage.toLowerCase().includes("rate limit") ||
+        errorMessage.toLowerCase().includes("RESOURCE_EXHAUSTED") ||
+        errorMessage.toLowerCase().includes("limit exceeded")) {
+      return new Response(JSON.stringify({ 
+        error: "limit_exceeded",
+        message: "Your API limit has been reached. Please try again later." 
+      }), { status: 429 });
+    }
+    
     return new Response(JSON.stringify({ error: "Something went wrong" }), { status: 500 });
   }
 }
