@@ -298,10 +298,11 @@ export default function ChatPage() {
       let textContent = fullText;
       try {
         const cleanedForJson = fullText.replace(/^```json\n?/, "").replace(/```$/, "").trim();
-        parsedJson = JSON.parse(cleanedForJson);
-        if (parsedJson.english || parsedJson.amharic) {
+        const parsed = JSON.parse(cleanedForJson);
+        if (parsed && (parsed.english || parsed.amharic)) {
+          parsedJson = parsed;
           isJsonResponse = true;
-          textContent = parsedJson.english || parsedJson.amharic || fullText;
+          textContent = parsed.english || parsed.amharic || fullText;
         }
       } catch {
         textContent = fullText;
