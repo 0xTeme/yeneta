@@ -108,6 +108,7 @@ export async function getDbSessions() {
         type: m.type as any,
         content: m.content,
         fileName: m.fileName || undefined,
+        imageUrls: m.imageUrls || [],
         timestamp: m.createdAt.getTime()
       }))
     }));
@@ -156,6 +157,7 @@ export async function saveDbSession(sessionData: any) {
           type: m.type,
           content: m.content,
           fileName: m.fileName,
+          imageUrls: m.imageUrls || [],
           createdAt: new Date(m.timestamp)
         }))
       });
