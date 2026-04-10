@@ -237,45 +237,7 @@ export default function ChatPage() {
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, timestamp: Date.now(), type: "text" };
     const assistantId = (Date.now() + 1).toString();
 
-    if (wantsImage) {
-      setMessages(() => [...localHistory, userMsg, { id: assistantId, role: "assistant", content: language === "amharic" ? "ምስል እየፈለግኩ ነው..." : "Finding images...", timestamp: Date.now(), type: "text", isStreaming: true } as Message]);
-      setIsTyping(true);
 
-      try {
-        const res = await fetch("/api/image-search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: text }),
-        });
-
-        const data = await res.json();
-
-        if (data.images && data.images.length > 0) {
-          setMessages((prev) => prev.map((m) => 
-            m.id === assistantId 
-              ? { ...m, content: language === "amharic" 
-                  ? `{"english":"Here are some images related to: ${data.query}","amharic":"ይህን ጋር የተዛማው ምስል ነው: ${data.query}"}` 
-                  : `{"english":"Here are some images related to: ${data.query}","amharic":"ይህን ጋር የተዛማው ምስል ነው: ${data.query}"}`, imageUrls: data.images, isStreaming: false }
-              : m
-          ));
-        } else {
-          setMessages((prev) => prev.map((m) => 
-            m.id === assistantId 
-              ? { ...m, content: language === "amharic" ? "ምስል አልተገኘም።" : "No images found.", isStreaming: false }
-              : m
-          ));
-        }
-      } catch (error) {
-        setMessages((prev) => prev.map((m) => 
-          m.id === assistantId 
-            ? { ...m, content: language === "amharic" ? "ስህተት ተከስቷል።" : "An error occurred.", isStreaming: false }
-            : m
-        ));
-      } finally {
-        setIsTyping(false);
-      }
-      return;
-    }
 
     setMessages(() => [...localHistory, userMsg, { id: assistantId, role: "assistant", content: "", timestamp: Date.now(), type: "text", isStreaming: true } as Message]);
     setIsTyping(true);
