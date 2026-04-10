@@ -337,26 +337,29 @@ export default function ChatPage() {
         // Not JSON, use full text
       }
       
-      // Extract markdown images: ![alt](url)
       let match;
-      const mdImageRegex = /!\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g;
-      while ((match = mdImageRegex.exec(textContent)) !== null) addImageUrl(match[2]);
+      const mdImageRegex = /!\[.*?\]\((.*?)\)/g;
+      while ((match = mdImageRegex.exec(textContent)) !== null) addImageUrl(match[1]);
 
-      // Raw URLs with image extensions
-      const rawRegex = /(https?:\/\/[^\s<>"'\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>"']*)?)/gi;
-      while ((match = rawRegex.exec(textContent)) !== null) addImageUrl(match[1]);
+      const unsplashRegex = /https?:\/\/(?:source\.)?unsplash\.com[^\s\)\"\'<>]+/gi;
+      while ((match = unsplashRegex.exec(textContent)) !== null) addImageUrl(match[0]);
 
-      // Image service URLs
-      const svcRegex = /(https?:\/\/(?:unsplash\.com|picsum\.photos|imgur\.com|i\.imgur\.com|images\.unsplash\.com)\/[^\s<>"']+)/gi;
-      while ((match = svcRegex.exec(textContent)) !== null) addImageUrl(match[1]);
+      const picsumRegex = /https?:\/\/picsum\.photos[^\s\)\"\'<>]+/gi;
+      while ((match = picsumRegex.exec(textContent)) !== null) addImageUrl(match[0]);
+
+      const imgurRegex = /https?:\/\/(?:i\.)?imgur\.com[^\s\)\"\'<>]+/gi;
+      while ((match = imgurRegex.exec(textContent)) !== null) addImageUrl(match[0]);
+
+      const extRegex = /https?:\/\/[^\s\)\"\'<>]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?.*)?/gi;
+      while ((match = extRegex.exec(textContent)) !== null) addImageUrl(match[0]);
 
       if (imageUrls.length > 0) {
         let cleanContent = textContent
-          .replace(/```json\n?/, "")
-          .replace(/```\n?$/, "")
-          .replace(/!\[(.*?)\]\([^)]+\)/g, "")
-          .replace(/(https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>"']*)?)/gi, "")
-          .replace(/(https?:\/\/(?:unsplash\.com|picsum\.photos|imgur\.com|i\.imgur\.com|images\.unsplash\.com)\/[^\s<>"']+)/gi, "")
+          .replace(/!\[.*?\]\(.*?\)/g, "")
+          .replace(/https?:\/\/(?:source\.)?unsplash\.com[^\s\)\"\'<>]+/gi, "")
+          .replace(/https?:\/\/picsum\.photos[^\s\)\"\'<>]+/gi, "")
+          .replace(/https?:\/\/(?:i\.)?imgur\.com[^\s\)\"\'<>]+/gi, "")
+          .replace(/https?:\/\/[^\s\)\"\'<>]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?.*)?/gi, "")
           .replace(/\\n/g, "\n")
           .replace(/\\"/g, '"')
           .replace(/\n{3,}/g, "\n\n")
