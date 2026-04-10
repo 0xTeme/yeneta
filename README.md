@@ -2,7 +2,7 @@
 
 > **"Learn Smarter in Your Own Language."**
 
-🔗 **Live Demo**: [https://yeneta-sigma.vercel.app/](https://yeneta-sigma.vercel.app/)
+🔗 **Live Demo**: [https://yeneta-ai.vercel.app/](https://yeneta-ai.vercel.app/)
 
 ---
 
