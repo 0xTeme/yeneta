@@ -355,11 +355,8 @@ export default function ChatPage() {
 
       if (imageUrls.length > 0) {
         let cleanContent = textContent
-          .replace(/!\[.*?\]\(.*?\)/g, "")
-          .replace(/https?:\/\/(?:source\.)?unsplash\.com[^\s\)\"\'<>]+/gi, "")
-          .replace(/https?:\/\/picsum\.photos[^\s\)\"\'<>]+/gi, "")
-          .replace(/https?:\/\/(?:i\.)?imgur\.com[^\s\)\"\'<>]+/gi, "")
-          .replace(/https?:\/\/[^\s\)\"\'<>]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?.*)?/gi, "")
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+          .replace(/https?:\/\/[^\s<>\)]+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?[^\s<>\)]*)?/gi, "")
           .replace(/\\n/g, "\n")
           .replace(/\\"/g, '"')
           .replace(/\n{3,}/g, "\n\n")

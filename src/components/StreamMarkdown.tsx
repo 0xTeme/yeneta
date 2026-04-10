@@ -12,7 +12,11 @@ export default function StreamMarkdown({ content, isStreaming }: Props) {
   const html = useMemo(() => {
     if (!content) return "";
     
-    const result = marked.parse(content, { 
+    let processedContent = content
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+      .replace(/<img[^>]*>/gi, "");
+    
+    const result = marked.parse(processedContent, { 
       async: false,
       gfm: true,
       breaks: true 
