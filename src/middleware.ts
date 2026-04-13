@@ -7,7 +7,7 @@ export default withAuth(
     const isOnboarding = req.nextUrl.pathname.startsWith("/onboarding");
     
     if (token) {
-      const isComplete = (token as any).profileComplete;
+      const isComplete = token.profileComplete;
       
       if (!isComplete && !isOnboarding) {
         return NextResponse.redirect(new URL("/onboarding", req.url));

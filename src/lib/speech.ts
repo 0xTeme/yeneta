@@ -1,5 +1,48 @@
 type TTSListener = (isPlaying: boolean) => void;
 const ttsListeners = new Set<TTSListener>();
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList[];
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+type SpeechRecognitionResultEventHandler = (event: SpeechRecognitionEvent) => void;
+type SpeechRecognitionErrorEventHandler = (event: SpeechRecognitionErrorEvent) => void;
+
+interface SpeechRecognitionInstance {
+  new (): {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    maxAlternatives: number;
+    onresult: SpeechRecognitionResultEventHandler;
+    onerror: SpeechRecognitionErrorEventHandler;
+    onend: (() => void) | null;
+    onstart: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+    abort: () => void;
+  };
+}
+
+interface WindowWithSpeech extends Window {
+  SpeechRecognition: SpeechRecognitionInstance;
+  webkitSpeechRecognition: SpeechRecognitionInstance;
+}
 let isPlayingQueue = false;
 
 export const subscribeToTTS = (listener: TTSListener) => {
@@ -151,8 +194,8 @@ export const startListening = (
   if (typeof window === "undefined") return null;
 
   const SpeechRecognitionAPI =
-    (window as any).SpeechRecognition ||
-    (window as any).webkitSpeechRecognition;
+        (window as unknown as WindowWithSpeech).SpeechRecognition ||
+        (window as unknown as WindowWithSpeech).webkitSpeechRecognition;
 
   if (!SpeechRecognitionAPI) {
     onError("Speech recognition is not supported. Please use Chrome or Edge.");
@@ -213,7 +256,9 @@ export const startListening = (
       isManuallyStopped = true;
       try {
         recognition.stop();
-      } catch {}
+      } catch {
+        // Cleanup failure is non-critical
+      }
     };
   } catch (error) {
     onError("Failed to start microphone.");

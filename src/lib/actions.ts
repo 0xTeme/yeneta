@@ -98,14 +98,14 @@ export async function getDbSessions() {
     return sessions.map(s => ({
       id: s.id,
       title: s.title,
-      language: s.language as any,
+      language: s.language as "amharic" | "english",
       createdAt: s.createdAt.getTime(),
       updatedAt: s.updatedAt.getTime(),
       folder: s.folder?.name,
       messages: s.messages.map(m => ({
         id: m.id,
-        role: m.role as any,
-        type: m.type as any,
+        role: m.role as "user" | "assistant",
+        type: m.type as "text" | "image" | "document" | "quiz",
         content: m.content,
         fileName: m.fileName || undefined,
         timestamp: m.createdAt.getTime()

@@ -2,6 +2,29 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { db } from "@/lib/db";
 
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      profileComplete: boolean;
+    };
+  }
+  interface User {
+    id: string;
+    profileComplete: boolean;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    profileComplete: boolean;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -37,8 +60,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).profileComplete = token.profileComplete;
+        session.user.id = token.id ?? "";
+        session.user.profileComplete = token.profileComplete;
       }
       return session;
     },
