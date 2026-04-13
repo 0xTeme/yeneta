@@ -19,6 +19,14 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "Message required" }), { status: 400 });
     }
 
+    // Message length validation to prevent quota exhaustion
+    const MAX_MESSAGE_LENGTH = 10000;
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return new Response(JSON.stringify({ 
+        error: `Message too long. Maximum length is ${MAX_MESSAGE_LENGTH} characters.` 
+      }), { status: 400 });
+    }
+
     const systemPrompt = getSystemPrompt(language || "english", userProfile);
 
     const chatHistory = (history || []).map((msg) => ({

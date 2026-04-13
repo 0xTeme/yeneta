@@ -36,6 +36,15 @@ export async function POST(req: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
+      // Server-side file size validation (10MB limit)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024;
+      if (buffer.length > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `File too large. Maximum size is 10MB.` },
+          { status: 413 }
+        );
+      }
+
       if (fileName.match(/\.(pdf|pptx)$/)) {
         documentContent = buffer.toString("base64");
         isBase64 = true;
@@ -72,11 +81,12 @@ export async function POST(req: NextRequest) {
 
     const prompt = getDocumentPrompt(language, action, questionCount, instruction, dbUser);
 
-    const apiPayload = isBase64 
+    type ContentPart = string | { inlineData: { mimeType: string; data: string } };
+    const apiPayload: ContentPart[] | string = isBase64 
       ? [prompt, { inlineData: { mimeType, data: documentContent } }] 
       : `${prompt}\n\nDocument Content:\n${documentContent}`;
 
-    const result = await model.generateContent(apiPayload as any);
+    const result = await model.generateContent(apiPayload);
     const response = result.response.text();
 
     return NextResponse.json({ response });
