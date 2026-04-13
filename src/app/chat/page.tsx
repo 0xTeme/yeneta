@@ -332,7 +332,72 @@ export default function ChatPage() {
         }
       }
 
-      if (imageUrls.length > 0) {
+      // Check for image search markers
+      const imageMarkerRegex = /\[\[IMAGE:\s*([^\]]+)\]\]/gi;
+      const imageMarkers: string[] = [];
+      let markerMatch;
+      while ((markerMatch = imageMarkerRegex.exec(textContent)) !== null) {
+        imageMarkers.push(markerMatch[1].trim());
+      }
+
+      if (imageMarkers.length > 0) {
+        // Search for images using the queries from the AI
+        try {
+          const searchRes = await fetch("/api/image-search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: imageMarkers[0] }),
+          });
+          const searchData = await searchRes.json();
+          
+          if (searchData.images && searchData.images.length > 0) {
+            // Clean content by removing the IMAGE markers
+            let cleanContent = textContent
+              .replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "")
+              .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+              .replace(/https:\/\/[^\s<>"')\]]+/gi, "")
+              .replace(/\\n/g, "\n")
+              .replace(/\\"/g, '"')
+              .replace(/\n{3,}/g, "\n\n")
+              .trim();
+            
+            let finalContent = fullText;
+            if (isJsonResponse && parsedJson) {
+              parsedJson.english = (parsedJson.english || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+              parsedJson.amharic = (parsedJson.amharic || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+              finalContent = JSON.stringify(parsedJson);
+            } else {
+              finalContent = cleanContent || "Here are some images:";
+            }
+            
+            setMessages((prev) => prev.map((m) => 
+              m.id === assistantId 
+                ? { ...m, content: finalContent, imageUrls: searchData.images }
+                : m
+            ));
+            return;
+          }
+        } catch (e) {
+          console.error("Image search failed:", e);
+        }
+      }
+
+      // Fallback: check for existing markdown images or URLs
+      const allImageUrls: string[] = [];
+      const addUrl = (url: string) => { if (url && url.length > 10 && !allImageUrls.includes(url)) allImageUrls.push(url); };
+      
+      const mdRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+      while ((match = mdRegex.exec(textContent)) !== null) addUrl(match[2]);
+
+      const urlRegex = /https:\/\/[^\s<>"')\]]+/gi;
+      while ((match = urlRegex.exec(textContent)) !== null) {
+        const url = match[0];
+        if (url.match(/\.(?:jpg|jpeg|png|gif|webp)(\?|$)/i) || url.includes("wikimedia") || url.includes("unsplash")) {
+          addUrl(url);
+        }
+      }
+
+      if (allImageUrls.length > 0) {
         let cleanContent = textContent
           .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
           .replace(/https:\/\/[^\s<>"')\]]+/gi, "")
@@ -347,12 +412,12 @@ export default function ChatPage() {
           parsedJson.amharic = (parsedJson.amharic || "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
           finalContent = JSON.stringify(parsedJson);
         } else {
-          finalContent = cleanContent || "Here are the images:";
+          finalContent = cleanContent;
         }
         
         setMessages((prev) => prev.map((m) => 
           m.id === assistantId 
-            ? { ...m, content: finalContent, imageUrls }
+            ? { ...m, content: finalContent, imageUrls: allImageUrls }
             : m
         ));
       }
