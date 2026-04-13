@@ -2,6 +2,9 @@
 
 import { useMemo } from "react";
 import { marked } from "marked";
+import createDOMPurify from "dompurify";
+
+const DOMPurify = typeof window !== "undefined" ? createDOMPurify(window) : null;
 
 interface Props {
   content: string;
@@ -22,7 +25,28 @@ export default function StreamMarkdown({ content, isStreaming }: Props) {
       breaks: true 
     });
     
-    return typeof result === "string" ? result : "";
+    let htmlString = typeof result === "string" ? result : "";
+    
+    // Sanitize HTML to prevent XSS attacks
+    if (DOMPurify && htmlString) {
+      htmlString = DOMPurify.sanitize(htmlString, {
+        ALLOWED_TAGS: [
+          "h1", "h2", "h3", "h4", "h5", "h6",
+          "p", "br", "hr",
+          "ul", "ol", "li",
+          "blockquote", "pre", "code",
+          "strong", "em", "del", "u", "s",
+          "a", "span", "div",
+          "table", "thead", "tbody", "tr", "th", "td",
+          "img"
+        ],
+        ALLOWED_ATTR: ["href", "src", "alt", "title", "class", "target"],
+        FORCE_BODY: false,
+        ALLOW_DATA_ATTR: false,
+      });
+    }
+    
+    return htmlString;
   }, [content]);
 
   if (isStreaming) {
