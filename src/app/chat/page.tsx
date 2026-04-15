@@ -66,20 +66,38 @@ export default function ChatPage() {
     if (status === "authenticated") {
       const loadCloudData = async () => {
         try {
-          const profile = await getDbProfile();
-          if (profile) setUserProfile(profile as any);
+          const profileResult = await getDbProfile();
+          if (profileResult && !('error' in profileResult)) {
+            setUserProfile(profileResult as any);
+          } else if (profileResult && 'error' in profileResult) {
+            console.error("Failed to load profile:", profileResult.error);
+          }
 
-          const [folders, sessions] = await Promise.all([getDbFolders(), getDbSessions()]);
-          setFoldersList(folders);
-          setSessionsList(sessions);
+          const [foldersResult, sessionsResult] = await Promise.all([
+            getDbFolders(),
+            getDbSessions()
+          ]);
 
-          if (sessions.length > 0) {
-            const latest = sessions[0];
-            setCurrentSessionId(latest.id);
-            setMessages(latest.messages || []);
-            setLanguage((latest.language as Language) || "amharic");
+          if ('error' in foldersResult) {
+            console.error("Failed to load folders:", foldersResult.error);
           } else {
-            setCurrentSessionId(generateId());
+            setFoldersList(foldersResult.folders || []);
+          }
+
+          if ('error' in sessionsResult) {
+            console.error("Failed to load sessions:", sessionsResult.error);
+            setSessionsList([]);
+          } else {
+            setSessionsList(sessionsResult.sessions || []);
+            
+            if (sessionsResult.sessions && sessionsResult.sessions.length > 0) {
+              const latest = sessionsResult.sessions[0];
+              setCurrentSessionId(latest.id);
+              setMessages(latest.messages || []);
+              setLanguage((latest.language as Language) || "amharic");
+            } else {
+              setCurrentSessionId(generateId());
+            }
           }
         } catch (error) {
           console.error("Failed to load cloud data:", error);
@@ -117,7 +135,11 @@ export default function ChatPage() {
       return [{ ...sessionData, updatedAt: Date.now() }, ...prev].sort((a, b) => b.updatedAt - a.updatedAt);
     });
 
-    saveDbSession(sessionData).catch(console.error);
+    saveDbSession(sessionData).then(result => {
+      if (result && 'error' in result) {
+        console.error("Failed to save session:", result.error);
+      }
+    }).catch(err => console.error("Save session failed:", err));
   }, [messages, currentSessionId, language]);
 
   const handleSaveProfile = async () => {
@@ -140,7 +162,10 @@ export default function ChatPage() {
 
     setUserProfile(finalProfile as any);
     setShowProfileModal(false);
-    await saveDbProfile(finalProfile);
+    const result = await saveDbProfile(finalProfile);
+    if (result && 'error' in result) {
+      console.error("Failed to save profile:", result.error);
+    }
   };
 
   const handleNewSession = (folderName?: string) => {
@@ -151,7 +176,11 @@ export default function ChatPage() {
     
     const newSession = { id: newId, title: "New Chat", language, folder: folderName, messages: [], updatedAt: Date.now() };
     setSessionsList(prev => [newSession, ...prev]);
-    saveDbSession(newSession).catch(console.error);
+    saveDbSession(newSession).then(result => {
+      if (result && 'error' in result) {
+        console.error("Failed to create session:", result.error);
+      }
+    }).catch(err => console.error("Create session failed:", err));
   };
 
   const handleLoadSession = (id: string) => {
@@ -173,18 +202,27 @@ export default function ChatPage() {
       if (updated.length > 0) handleLoadSession(updated[0].id);
       else handleNewSession();
     }
-    await deleteDbSession(id);
+    const result = await deleteDbSession(id);
+    if (result && 'error' in result) {
+      console.error("Failed to delete session:", result.error);
+    }
   };
 
   const handleCreateFolder = async (name: string) => {
     setFoldersList(prev => [...new Set([...prev, name])].sort());
-    await createDbFolder(name);
+    const result = await createDbFolder(name);
+    if (result && 'error' in result) {
+      console.error("Failed to create folder:", result.error);
+    }
   };
 
   const handleDeleteFolder = async (name: string) => {
     setFoldersList(prev => prev.filter(f => f !== name));
     setSessionsList(prev => prev.map(s => s.folder === name ? { ...s, folder: undefined } : s));
-    await deleteDbFolder(name);
+    const result = await deleteDbFolder(name);
+    if (result && 'error' in result) {
+      console.error("Failed to delete folder:", result.error);
+    }
   };
 
   const executeMove = async (folderName: string) => {
@@ -192,7 +230,10 @@ export default function ChatPage() {
     if (id) {
       setSessionsList(prev => prev.map(s => s.id === id ? { ...s, folder: folderName } : s));
       setMoveModalState({ isOpen: false, sessionId: null });
-      await moveDbSession(id, folderName);
+      const result = await moveDbSession(id, folderName);
+      if (result && 'error' in result) {
+        console.error("Failed to move session:", result.error);
+      }
     }
   };
 
@@ -204,7 +245,10 @@ export default function ChatPage() {
       setSessionsList(prev => prev.map(s => s.id === id ? { ...s, folder: name } : s));
       setMoveModalState({ isOpen: false, sessionId: null });
       await createDbFolder(name);
-      await moveDbSession(id, name);
+      const result = await moveDbSession(id, name);
+      if (result && 'error' in result) {
+        console.error("Failed to create and move:", result.error);
+      }
     }
   };
 
@@ -341,17 +385,23 @@ export default function ChatPage() {
       }
 
       if (imageMarkers.length > 0) {
-        // Search for images using the queries from the AI
+        console.log(`[Image Search] Found ${imageMarkers.length} markers, searching for: ${imageMarkers[0]}`);
+        
         try {
           const searchRes = await fetch("/api/image-search", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query: imageMarkers[0] }),
           });
+          
+          if (!searchRes.ok) {
+            console.error(`[Image Search] API error: ${searchRes.status}`);
+          }
+          
           const searchData = await searchRes.json();
+          console.log(`[Image Search] API returned:`, searchData);
           
           if (searchData.images && searchData.images.length > 0) {
-            // Clean content by removing the IMAGE markers
             let cleanContent = textContent
               .replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "")
               .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
@@ -376,9 +426,11 @@ export default function ChatPage() {
                 : m
             ));
             return;
+          } else {
+            console.log(`[Image Search] No images found for query: ${imageMarkers[0]}`);
           }
         } catch (e) {
-          console.error("Image search failed:", e);
+          console.error("[Image Search] Failed:", e);
         }
       }
 
