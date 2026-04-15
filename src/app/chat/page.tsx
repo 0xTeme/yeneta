@@ -88,14 +88,17 @@ export default function ChatPage() {
             console.error("Failed to load sessions:", sessionsResult.error);
             setSessionsList([]);
           } else {
+            console.log(`[Session] Loaded ${sessionsResult.sessions?.length || 0} sessions from database`);
             setSessionsList(sessionsResult.sessions || []);
             
             if (sessionsResult.sessions && sessionsResult.sessions.length > 0) {
               const latest = sessionsResult.sessions[0];
+              console.log(`[Session] Loading latest session: ${latest.id}, messages: ${latest.messages?.length || 0}`);
               setCurrentSessionId(latest.id);
               setMessages(latest.messages || []);
               setLanguage((latest.language as Language) || "amharic");
             } else {
+              console.log("[Session] No sessions found, creating new");
               setCurrentSessionId(generateId());
             }
           }
@@ -135,11 +138,14 @@ export default function ChatPage() {
       return [{ ...sessionData, updatedAt: Date.now() }, ...prev].sort((a, b) => b.updatedAt - a.updatedAt);
     });
 
+    console.log(`[Session] Saving session ${currentSessionId} with ${messages.length} messages`);
     saveDbSession(sessionData).then(result => {
       if (result && 'error' in result) {
-        console.error("Failed to save session:", result.error);
+        console.error("[Session] Save failed:", result.error);
+      } else {
+        console.log("[Session] Save successful");
       }
-    }).catch(err => console.error("Save session failed:", err));
+    }).catch(err => console.error("[Session] Save error:", err));
   }, [messages, currentSessionId, language]);
 
   const handleSaveProfile = async () => {
@@ -274,9 +280,10 @@ export default function ChatPage() {
       return;
     }
 
-    // Check if user wants an image
-    const imageKeywords = /draw|paint|create.image|generate.image|show.me.a|show.me.an|image of|picture of|illustrate|visualize|show me/i;
+    const imageKeywords = /draw|paint|create.image|generate.image|show.me|show.me.an|image of|picture of|illustrate|visualize|can you show|show me|show an|show a|can you draw|can you illustrate|can you visualize|need an image|need a picture|want to see/i;
     const wantsImage = imageKeywords.test(text);
+    
+    console.log(`[Chat] wantsImage: ${wantsImage} for message: "${text.substring(0, 50)}..."`);
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text, timestamp: Date.now(), type: "text" };
     const assistantId = (Date.now() + 1).toString();
@@ -376,8 +383,8 @@ export default function ChatPage() {
         }
       }
 
-      // Only search for images if user explicitly requested them
-      if (wantsImage) {
+      // Search for images if AI included image markers (AI decides when visuals help)
+      if (true) {
         const imageMarkerRegex = /\[\[IMAGE:\s*([^\]]+)\]\]/gi;
         const imageMarkers: string[] = [];
         let markerMatch;

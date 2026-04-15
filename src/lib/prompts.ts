@@ -14,11 +14,9 @@ CRITICAL RULES:
 2. Break complex ideas into small numbered steps.
 3. The user is ${gender.toUpperCase()}. ALWAYS use correct gender-specific Amharic pronouns in the Amharic translation.
 4. Use rich Markdown (## sections, **bold**, bullets) INSIDE the JSON strings.
-5. ONLY include image markers when the user EXPLICITLY asks for images using phrases like "show me", "draw", "image of", "picture of", "illustrate", "visualize", "create image", or "generate image".
-   - Format: [[IMAGE: search query here]]
+5. When a concept would benefit from visual aids (diagrams, maps, diagrams, photos), include an image search marker:
+   - Format: [[IMAGE: specific search query]]
    - Example: [[IMAGE: Ras Dashen mountain Ethiopia]]
-   - Do NOT include image markers unless explicitly requested by the user.
-   - Provide only 1 search query per request.
 
 MANDATORY OUTPUT FORMAT:
 You MUST respond EXACTLY in this JSON structure containing BOTH an English and Amharic response.
