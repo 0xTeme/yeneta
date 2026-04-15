@@ -465,18 +465,32 @@ export default function ChatPage() {
 
       // Fallback: check for existing markdown images or URLs
       const allImageUrls: string[] = [];
-      const addUrl = (url: string) => { if (url && url.length > 10 && !allImageUrls.includes(url)) allImageUrls.push(url); };
+      const addUrl = (url: string) => { 
+        if (url && url.length > 10 && !allImageUrls.includes(url)) {
+          allImageUrls.push(url); 
+        }
+      };
       
       const mdRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
       while ((match = mdRegex.exec(textContent)) !== null) addUrl(match[2]);
 
-      const urlRegex = /https:\/\/[^\s<>"')\]]+/gi;
+      const urlRegex = /https?:\/\/[^\s<>"')\]]+/gi;
       while ((match = urlRegex.exec(textContent)) !== null) {
         const url = match[0];
-        if (url.match(/\.(?:jpg|jpeg|png|gif|webp)(\?|$)/i) || url.includes("wikimedia") || url.includes("unsplash")) {
+        if (
+          url.match(/\.(?:jpg|jpeg|png|gif|webp)(\?|$)/i) ||
+          url.includes("wikimedia") ||
+          url.includes("unsplash") ||
+          url.includes("loremflickr") ||
+          url.includes("images.unsplash") ||
+          url.includes("pexels") ||
+          url.includes("imgur")
+        ) {
           addUrl(url);
         }
       }
+
+      console.log(`[Image] Found ${allImageUrls.length} image URLs from markdown`);
 
       if (allImageUrls.length > 0) {
         let cleanContent = textContent
