@@ -428,11 +428,31 @@ export default function ChatPage() {
                 finalContent = cleanContent || "Here are some images:";
               }
               
-              setMessages((prev) => prev.map((m) => 
-                m.id === assistantId 
-                  ? { ...m, content: finalContent, imageUrls: searchData.images }
-                  : m
-              ));
+              setMessages((prev) => {
+                const updated = prev.map((m) => 
+                  m.id === assistantId 
+                    ? { ...m, content: finalContent, imageUrls: searchData.images }
+                    : m
+                );
+                
+                setTimeout(() => {
+                  saveDbSession({ 
+                    id: currentSessionId, 
+                    title: updated.find(m => m.role === "user")?.content?.slice(0, 50) || "New Chat", 
+                    language, 
+                    messages: updated, 
+                    folder: sessionsList.find(s => s.id === currentSessionId)?.folder 
+                  }).then(result => {
+                    if (result && 'error' in result) {
+                      console.error("[Session] Save with images failed:", result.error);
+                    } else {
+                      console.log("[Session] Saved session with images");
+                    }
+                  });
+                }, 500);
+                
+                return updated;
+              });
               return;
             } else {
               console.log(`[Image Search] No images found for query: ${imageMarkers[0]}`);

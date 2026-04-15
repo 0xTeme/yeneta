@@ -149,6 +149,7 @@ export async function getDbSessions() {
           type: m.type as "text" | "image" | "document" | "quiz",
           content: m.content,
           fileName: m.fileName || undefined,
+          imageUrls: m.imageUrls ? JSON.parse(m.imageUrls) : undefined,
           timestamp: m.createdAt.getTime()
         }))
       }))
@@ -214,6 +215,7 @@ export async function saveDbSession(sessionData: {
           type: m.type,
           content: m.content,
           fileName: m.fileName,
+          imageUrls: m.imageUrls ? JSON.stringify(m.imageUrls) : null,
           createdAt: new Date(m.timestamp)
         }))
       });

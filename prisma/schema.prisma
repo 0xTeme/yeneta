@@ -72,6 +72,7 @@ model Message {
   type      String
   content   String      @db.Text
   fileName  String?
+  imageUrls String?     @db.Text
   
   createdAt DateTime    @default(now())
 }
