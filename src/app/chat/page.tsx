@@ -376,61 +376,63 @@ export default function ChatPage() {
         }
       }
 
-      // Check for image search markers
-      const imageMarkerRegex = /\[\[IMAGE:\s*([^\]]+)\]\]/gi;
-      const imageMarkers: string[] = [];
-      let markerMatch;
-      while ((markerMatch = imageMarkerRegex.exec(textContent)) !== null) {
-        imageMarkers.push(markerMatch[1].trim());
-      }
+      // Only search for images if user explicitly requested them
+      if (wantsImage) {
+        const imageMarkerRegex = /\[\[IMAGE:\s*([^\]]+)\]\]/gi;
+        const imageMarkers: string[] = [];
+        let markerMatch;
+        while ((markerMatch = imageMarkerRegex.exec(textContent)) !== null) {
+          imageMarkers.push(markerMatch[1].trim());
+        }
 
-      if (imageMarkers.length > 0) {
-        console.log(`[Image Search] Found ${imageMarkers.length} markers, searching for: ${imageMarkers[0]}`);
-        
-        try {
-          const searchRes = await fetch("/api/image-search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query: imageMarkers[0] }),
-          });
+        if (imageMarkers.length > 0) {
+          console.log(`[Image Search] User requested images, searching for: ${imageMarkers[0]}`);
           
-          if (!searchRes.ok) {
-            console.error(`[Image Search] API error: ${searchRes.status}`);
-          }
-          
-          const searchData = await searchRes.json();
-          console.log(`[Image Search] API returned:`, searchData);
-          
-          if (searchData.images && searchData.images.length > 0) {
-            let cleanContent = textContent
-              .replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "")
-              .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
-              .replace(/https:\/\/[^\s<>"')\]]+/gi, "")
-              .replace(/\\n/g, "\n")
-              .replace(/\\"/g, '"')
-              .replace(/\n{3,}/g, "\n\n")
-              .trim();
+          try {
+            const searchRes = await fetch("/api/image-search", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ query: imageMarkers[0] }),
+            });
             
-            let finalContent = fullText;
-            if (isJsonResponse && parsedJson) {
-              parsedJson.english = (parsedJson.english || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
-              parsedJson.amharic = (parsedJson.amharic || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
-              finalContent = JSON.stringify(parsedJson);
-            } else {
-              finalContent = cleanContent || "Here are some images:";
+            if (!searchRes.ok) {
+              console.error(`[Image Search] API error: ${searchRes.status}`);
             }
             
-            setMessages((prev) => prev.map((m) => 
-              m.id === assistantId 
-                ? { ...m, content: finalContent, imageUrls: searchData.images }
-                : m
-            ));
-            return;
-          } else {
-            console.log(`[Image Search] No images found for query: ${imageMarkers[0]}`);
+            const searchData = await searchRes.json();
+            console.log(`[Image Search] API returned:`, searchData);
+            
+            if (searchData.images && searchData.images.length > 0) {
+              let cleanContent = textContent
+                .replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "")
+                .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+                .replace(/https:\/\/[^\s<>"')\]]+/gi, "")
+                .replace(/\\n/g, "\n")
+                .replace(/\\"/g, '"')
+                .replace(/\n{3,}/g, "\n\n")
+                .trim();
+              
+              let finalContent = fullText;
+              if (isJsonResponse && parsedJson) {
+                parsedJson.english = (parsedJson.english || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+                parsedJson.amharic = (parsedJson.amharic || "").replace(/\[\[IMAGE:\s*[^\]]+\]\]/gi, "").replace(/!\[[^\]]*\]\([^)]+\)/g, "").replace(/https:\/\/[^\s<>"')\]]+/gi, "").replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+                finalContent = JSON.stringify(parsedJson);
+              } else {
+                finalContent = cleanContent || "Here are some images:";
+              }
+              
+              setMessages((prev) => prev.map((m) => 
+                m.id === assistantId 
+                  ? { ...m, content: finalContent, imageUrls: searchData.images }
+                  : m
+              ));
+              return;
+            } else {
+              console.log(`[Image Search] No images found for query: ${imageMarkers[0]}`);
+            }
+          } catch (e) {
+            console.error("[Image Search] Failed:", e);
           }
-        } catch (e) {
-          console.error("[Image Search] Failed:", e);
         }
       }
 
