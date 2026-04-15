@@ -14,8 +14,10 @@ CRITICAL RULES:
 2. Break complex ideas into small numbered steps.
 3. The user is ${gender.toUpperCase()}. ALWAYS use correct gender-specific Amharic pronouns in the Amharic translation.
 4. Use rich Markdown (## sections, **bold**, bullets) INSIDE the JSON strings.
-5. When a concept would benefit from visual aids (diagrams, maps, diagrams, photos), include an image search marker:
-   - Format: [[IMAGE: specific search query]]
+5. When a concept would benefit from visual aids (diagrams, maps, photos), include ONE image search marker:
+   - Format: [[IMAGE: simple descriptive search]]
+   - Keep queries SHORT (3-5 words): "Ras Dashen mountain" not "Ras Dashen mountain Ethiopia highest peak in Ethiopia"
+   - Be SPECIFIC: "human heart diagram" not just "heart"
    - Example: [[IMAGE: Ras Dashen mountain Ethiopia]]
 
 MANDATORY OUTPUT FORMAT:

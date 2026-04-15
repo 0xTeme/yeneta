@@ -15,34 +15,58 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Query required" }, { status: 400 });
     }
 
-    const searchQuery = encodeURIComponent(query.trim());
+    const searchQuery = query.trim();
     const imageUrls: string[] = [];
     
-    // Primary: Wikimedia Commons API
     try {
-      const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${searchQuery}&srnamespace=6&srlimit=15&format=json&origin=*`;
+      const encodedQuery = encodeURIComponent(searchQuery);
+      
+      const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodedQuery}&srnamespace=6&srlimit=20&srprop=size&format=json&origin=*`;
       
       const searchRes = await fetch(searchUrl, { next: { revalidate: 3600 } });
       const searchData = await searchRes.json();
       
       if (searchData.query?.search?.length > 0) {
-        const titles = searchData.query.search.map((r: { title: string }) => r.title);
+        const results = searchData.query.search;
         
-        const imageinfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join('|'))}&prop=imageinfo&iiprop=url&iiurlwidth=800&format=json&origin=*`;
+        const titles = results
+          .slice(0, 10)
+          .map((r: { title: string }) => r.title);
         
-        const infoRes = await fetch(imageinfoUrl, { next: { revalidate: 3600 } });
-        const infoData = await infoRes.json();
-        
-        const pages = infoData.query?.pages || {};
-        
-        for (const page of Object.values(pages) as { imageinfo?: { thumburl?: string; url?: string }[] }[]) {
-          const info = page.imageinfo?.[0];
-          if (info?.thumburl) {
-            imageUrls.push(info.thumburl);
-          } else if (info?.url) {
-            const url = info.url;
-            if (url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) {
-              imageUrls.push(url);
+        if (titles.length > 0) {
+          const imageinfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join('|'))}&prop=imageinfo&iiprop=url|mime|size&iiurlwidth=800&iiextmetadata=License,LicenseShortName&format=json&origin=*`;
+          
+          const infoRes = await fetch(imageinfoUrl, { next: { revalidate: 3600 } });
+          const infoData = await infoRes.json();
+          
+          const pages = infoData.query?.pages || {};
+          
+          for (const page of Object.values(pages) as { 
+            title?: string;
+            imageinfo?: { 
+              thumburl?: string; 
+              url?: string; 
+              mime?: string;
+              size?: number;
+            }[];
+          }[]) {
+            const info = page.imageinfo?.[0];
+            if (!info) continue;
+            
+            const mime = info.mime || '';
+            const isImage = mime.startsWith('image/');
+            const isJpeg = mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/webp';
+            
+            if (!isImage) continue;
+            
+            const thumbUrl = info.thumburl || info.url;
+            if (thumbUrl) {
+              const url = thumbUrl;
+              const isValidFormat = url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
+              
+              if (isValidFormat || isJpeg) {
+                imageUrls.push(url);
+              }
             }
           }
         }
@@ -53,14 +77,12 @@ export async function POST(req: NextRequest) {
       console.error("Wikimedia API error:", wikiError);
     }
 
-    // Fallback: LoremFlickr (reliable alternative to deprecated unsplash)
     if (imageUrls.length === 0) {
-      const fallbackUrl = `https://loremflickr.com/800/600/${searchQuery}?lock=0-100`;
+      const fallbackUrl = `https://loremflickr.com/800/600/${encodeURIComponent(searchQuery)}?lock=0-100`;
       imageUrls.push(fallbackUrl);
       console.log(`Using LoremFlickr fallback for "${query}"`);
     }
 
-    // If still empty, return placeholder
     if (imageUrls.length === 0) {
       return NextResponse.json({
         query,
